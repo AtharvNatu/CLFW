@@ -12,11 +12,23 @@ void Logger::initialize(void)
         print_log("Log File Opened");
 }
 
-void Logger::print_log(string message)
+void Logger::print_log(const char* fmt, ...)
 {
+    // Variable Declarations
+    va_list arg_list;
+    int ret;
+
+    // Code
+    if (log_file == nullptr)
+        return;
+
     fprintf(log_file, get_current_time().c_str());
     fprintf(log_file, "\t");
-    fprintf(log_file, message.c_str());
+
+    va_start(arg_list, fmt);
+    ret = vfprintf(log_file, fmt, arg_list);
+    va_end(arg_list);
+
     fprintf(log_file, "\n");
 }
 

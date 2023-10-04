@@ -28,7 +28,7 @@
     #elif (CLFW_OS == 2)
         #include <CL/opencl.h>
     #elif (CLFW_OS == 3)
-        #include <OpenCL/opencl.h>
+        #include <OpenCL/cl.h>
     #endif
 
     class CLFW
@@ -75,7 +75,7 @@
         void ocl_initialize(void);
         void ocl_uninitialize(void);
 
-        void ocl_exec_status(cl_int ocl_result);
+        void ocl_exec_status(cl_int ocl_result, int line_no);
         string ocl_get_error_string(cl_int ocl_result);
 
         void ocl_get_platforms(void);

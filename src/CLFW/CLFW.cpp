@@ -32,14 +32,14 @@ void CLFW::ocl_initialize(void)
     ocl_create_command_queue();
 }
 
-void CLFW::ocl_exec_status(cl_int ocl_param)
+void CLFW::ocl_exec_status(cl_int ocl_param, int line_no)
 {
     // Code
     if (DEBUG)
     {
         if (ocl_param != CL_SUCCESS)
         {
-            cerr << endl << "CLFW Error : " << ocl_get_error_string(ocl_param) << endl;
+            cerr << endl << "CLFW Error :  " << ocl_get_error_string(ocl_param) << " At Line No. " << line_no << endl;
             this->ocl_uninitialize();
             exit(CLFW_FAILURE);
         }   
@@ -130,27 +130,31 @@ string CLFW::ocl_get_error_string(cl_int error)
 void CLFW::ocl_get_platforms(void)
 {
     // Code
-    ocl_exec_status(clGetPlatformIDs(0, NULL, &ocl_num_platforms));
+    ocl_exec_status(clGetPlatformIDs(0, NULL, &ocl_num_platforms), __LINE__);
     
     ocl_platforms = (cl_platform_id*)malloc(ocl_num_platforms * sizeof(cl_platform_id));
     if (ocl_platforms == NULL)
     {
         if (DEBUG)
-            cerr << endl << "Error : Failed To Allocate Memory To ocl_platforms ... Exiting !!!" << endl;
+            cerr << endl << "CLFW Error :  Failed To Allocate Memory To ocl_platforms ... Exiting !!!" << endl;
+        else
+            logger->print_log("\nCLFW Error :  Failed To Allocate Memory To ocl_platforms ... Exiting !!!\n");
+
         this->ocl_uninitialize();
         exit(CLFW_FAILURE);
     }
 
-    ocl_exec_status(clGetPlatformIDs(ocl_num_platforms, ocl_platforms, NULL));
+    ocl_exec_status(clGetPlatformIDs(ocl_num_platforms, ocl_platforms, NULL), __LINE__);
 
     if (ocl_num_platforms == 0)
     {
         if (DEBUG)
-        {
-            cerr << endl << "Error : No OpenCL Supported Platforms Found ... Exiting !!!" << endl;
-            this->ocl_uninitialize();
-            exit(CLFW_FAILURE);
-        }
+            cerr << endl << "CLFW Error :  No OpenCL Supported Platforms Found ... Exiting !!!" << endl;
+        else
+            logger->print_log("\nCLFW Error :  No OpenCL Supported Platforms Found ... Exiting !!!\n");
+
+        this->ocl_uninitialize();
+        exit(CLFW_FAILURE);
     }
     else
     {
@@ -160,7 +164,7 @@ void CLFW::ocl_get_platforms(void)
             cout << "-------------------------------------------------------------";
             for (int i = 0; i < ocl_num_platforms; i++)
             {
-                ocl_exec_status(clGetPlatformInfo(ocl_platforms[i], CL_PLATFORM_NAME, 500, &ocl_platform_info, NULL));
+                ocl_exec_status(clGetPlatformInfo(ocl_platforms[i], CL_PLATFORM_NAME, 500, &ocl_platform_info, NULL), __LINE__);
                 cout << endl << "Platform " << i + 1 << " : " << ocl_platform_info;
             }
             cout << endl << "-------------------------------------------------------------" << endl;
@@ -170,7 +174,18 @@ void CLFW::ocl_get_platforms(void)
 
 void CLFW::ocl_set_platform(int platform)
 {
-    ocl_platform_id = ocl_platforms[platform - 1];
+    if (platform <= ocl_num_platforms)
+        ocl_platform_id = ocl_platforms[platform - 1];
+    else
+    {
+        if (DEBUG)
+            cerr << endl << "CLFW Error : Please Select Valid OpenCL Platform ... Exiting !!!" << endl;
+        else
+            logger->print_log("CLFW Error : Please Select Valid OpenCL Platform ... Exiting !!!");
+
+        this->ocl_uninitialize();
+        exit(CLFW_FAILURE);
+    }
 }
 
 void CLFW::ocl_get_devices(void)
@@ -184,13 +199,15 @@ void CLFW::ocl_get_devices(void)
             0,
             NULL,
             &ocl_num_devices
-        ));
+        ), __LINE__);
 
         ocl_devices = (cl_device_id*)malloc(ocl_num_devices * sizeof(cl_device_id));
         if (ocl_devices == NULL)
         {
             if (DEBUG)
-                cerr << endl << "Error : Failed To Allocate Memory To ocl_platforms ... Exiting !!!" << endl;
+                cerr << endl << "CLFW Error :  Failed To Allocate Memory To ocl_platforms ... Exiting !!!" << endl;
+            else
+                logger->print_log("\nCLFW Error :  Failed To Allocate Memory To ocl_platforms ... Exiting !!!\n");
             this->ocl_uninitialize();
             exit(CLFW_FAILURE);
         }
@@ -201,16 +218,16 @@ void CLFW::ocl_get_devices(void)
             ocl_num_devices,
             ocl_devices,
             NULL
-        ));
+        ), __LINE__);
 
         if (ocl_num_devices == 0)
         {
             if (DEBUG)
-            {
-                cerr << endl << "Error : No OpenCL Supported Devices Found ... Exiting !!!" << endl;
-                this->ocl_uninitialize();
-                exit(CLFW_FAILURE);
-            }
+                cerr << endl << "CLFW Error :  No OpenCL Supported Devices Found ... Exiting !!!" << endl;
+            else
+                logger->print_log("\nCLFW Error :  Failed To Allocate Memory To ocl_platforms ... Exiting !!!\n");
+            this->ocl_uninitialize();
+            exit(CLFW_FAILURE);
         }
         else
         {
@@ -232,7 +249,18 @@ void CLFW::ocl_get_devices(void)
 void CLFW::ocl_set_device(int device)
 {
     // Code
-    ocl_device_id = ocl_devices[device - 1];
+    if (device <= ocl_num_devices)
+        ocl_device_id = ocl_devices[device - 1];
+    else
+    {
+        if (DEBUG)
+            cerr << endl << "CLFW Error : Please Select Valid OpenCL Device ... Exiting !!!" << endl;
+        else
+            logger->print_log("CLFW Error : Please Select Valid OpenCL Device ... Exiting !!!");
+
+        this->ocl_uninitialize();
+        exit(CLFW_FAILURE);
+    }
 }
 
 void CLFW::ocl_dev_properties(void)
@@ -248,7 +276,7 @@ void CLFW::ocl_dev_properties(void)
             sizeof(ocl_dev_prop),
             &ocl_dev_prop,
             NULL
-        ));
+        ), __LINE__);
         cout << endl << "GPU Device Name : " << ocl_dev_prop << endl;
 
         ocl_exec_status(clGetDeviceInfo(
@@ -257,7 +285,7 @@ void CLFW::ocl_dev_properties(void)
             sizeof(ocl_dev_prop),
             &ocl_dev_prop,
             NULL
-        ));
+        ), __LINE__);
         cout << endl << "GPU Device Vendor : " << ocl_dev_prop << endl;
 
         ocl_exec_status(clGetDeviceInfo(
@@ -266,7 +294,7 @@ void CLFW::ocl_dev_properties(void)
             sizeof(ocl_dev_prop),
             &ocl_dev_prop,
             NULL
-        ));
+        ), __LINE__);
         cout << endl << "GPU Device Version : " << ocl_dev_prop << endl;
 
         ocl_exec_status(clGetDeviceInfo(
@@ -275,7 +303,7 @@ void CLFW::ocl_dev_properties(void)
             sizeof(ocl_mem_size),
             &ocl_mem_size,
             NULL
-        ));
+        ), __LINE__);
         cout << endl << "GPU Memory : " << (unsigned long long) ocl_mem_size / 1000000000 << " GB" << endl;
 
         ocl_exec_status(clGetDeviceInfo(
@@ -284,7 +312,7 @@ void CLFW::ocl_dev_properties(void)
             sizeof(ocl_compute_units),
             &ocl_compute_units,
             NULL
-        ));
+        ), __LINE__);
         cout << endl << "GPU Compute Units : " << ocl_compute_units << endl;
 
         cout << "-------------------------------------------------------------" << endl;
@@ -302,7 +330,7 @@ void CLFW::ocl_create_context(void)
         NULL,
         &ocl_result
     );
-    ocl_exec_status(ocl_result);
+    ocl_exec_status(ocl_result, __LINE__);
 }
 
 void CLFW::ocl_create_command_queue(void)
@@ -314,7 +342,7 @@ void CLFW::ocl_create_command_queue(void)
         0,
         &ocl_result     
     );
-    ocl_exec_status(ocl_result);
+    ocl_exec_status(ocl_result, __LINE__);
 }
 
 const char *CLFW::ocl_read_kernel_from_file(const char *ocl_kernel_file)
@@ -339,9 +367,14 @@ const char *CLFW::ocl_read_kernel_from_file(const char *ocl_kernel_file)
     {
         if (DEBUG)
         {
-            cerr << endl << "Error : Failed To Open OpenCL Kernel File " << ocl_kernel_file << " ... Exiting !!!" << endl;
+            cerr << endl << "CLFW Error :  Failed To Open OpenCL Kernel File " << ocl_kernel_file << " ... Exiting !!!" << endl;
             return NULL;
         }
+        else
+        {
+            logger->print_log("\nCLFW Error :  Failed To Open OpenCL Kernel File ", ocl_kernel_file, " ... Exiting !!!\n");
+            return NULL;
+        }          
     }
 
     int file_length = filesystem::file_size(ocl_kernel_file);
@@ -351,7 +384,12 @@ const char *CLFW::ocl_read_kernel_from_file(const char *ocl_kernel_file)
     {
         if (DEBUG)
         {
-            cerr << endl << "Error : Failed To Allocate Memory To OpenCL Kernel Source Code ... Exiting !!!" << endl;
+            cerr << endl << "CLFW Error :  Failed To Allocate Memory To OpenCL Kernel Source Code ... Exiting !!!" << endl;
+            return NULL;
+        }
+        else
+        {
+            logger->print_log("\nCLFW Error :  Failed To Allocate Memory To OpenCL Kernel Source Code ... Exiting !!!\n");
             return NULL;
         }
     }
@@ -373,11 +411,12 @@ void CLFW::ocl_create_program(const char* ocl_kernel_file)
     if (ocl_kernel_source_code == NULL)
     {
         if (DEBUG)
-        {
-            cerr << endl << "Error : Failed To Read OpenCL Kernel From File : " << ocl_kernel_file << endl;
-            this->ocl_uninitialize();
-            exit(CLFW_FAILURE); 
-        }
+            cerr << endl << "CLFW Error :  Failed To Read OpenCL Kernel From File : " << ocl_kernel_file << endl;
+        else
+            logger->print_log("\nCLFW Error :  Failed To Read OpenCL Kernel From File : ", ocl_kernel_file);
+
+        this->ocl_uninitialize();
+        exit(CLFW_FAILURE); 
     }
 
     size_t ocl_source_code_size = strlen(ocl_kernel_source_code) + 1;
@@ -389,7 +428,7 @@ void CLFW::ocl_create_program(const char* ocl_kernel_file)
         &ocl_source_code_size,
         &ocl_result
     );
-    ocl_exec_status(ocl_result);
+    ocl_exec_status(ocl_result, __LINE__);
 
     // Release
     free((void*)ocl_kernel_source_code);
@@ -431,13 +470,14 @@ void CLFW::ocl_create_program(const char* ocl_kernel_file)
             );
 
             if (DEBUG)
-            {
-                cerr << endl << "Error : OpenCL Program Build Log : " << buffer << endl;
-                free(buffer);
-                buffer = NULL;
-                this->ocl_uninitialize();
-                exit(CLFW_FAILURE);
-            }
+                cerr << endl << "CLFW Error :  OpenCL Program Build Log : " << buffer << endl;
+            else
+                logger->print_log("\nCLFW Error :  OpenCL Program Build Log : ", buffer);
+
+            free(buffer);
+            buffer = NULL;
+            this->ocl_uninitialize();
+            exit(CLFW_FAILURE);
         }
     }
 }
@@ -449,7 +489,7 @@ void CLFW::ocl_create_kernel(const char* ocl_kernel_name, const char* ocl_kernel
 
     // Code
     ocl_kernel = clCreateKernel(ocl_program, ocl_kernel_name, &ocl_result);
-    ocl_exec_status(ocl_result);
+    ocl_exec_status(ocl_result, __LINE__);
 
     va_start(kernel_args_list, ocl_kernel_arg_types);
 
@@ -459,27 +499,27 @@ void CLFW::ocl_create_kernel(const char* ocl_kernel_name, const char* ocl_kernel
         {
             case 'b':
                 clfwTypes->ocl_buffer = va_arg(kernel_args_list, cl_mem);
-                ocl_exec_status(clSetKernelArg(ocl_kernel, i, sizeof(cl_mem), (void*)&clfwTypes->ocl_buffer));
+                ocl_exec_status(clSetKernelArg(ocl_kernel, i, sizeof(cl_mem), (void*)&clfwTypes->ocl_buffer), __LINE__);
             break;
 
             case 'i':
                 clfwTypes->int_data = va_arg(kernel_args_list, int);
-                ocl_exec_status(clSetKernelArg(ocl_kernel, i, sizeof(cl_int), (void*)&clfwTypes->int_data));
+                ocl_exec_status(clSetKernelArg(ocl_kernel, i, sizeof(cl_int), (void*)&clfwTypes->int_data), __LINE__);
             break;
 
             case 'f':
                 clfwTypes->float_data = va_arg(kernel_args_list, float);
-                ocl_exec_status(clSetKernelArg(ocl_kernel, i, sizeof(cl_float), (void*)&clfwTypes->float_data));
+                ocl_exec_status(clSetKernelArg(ocl_kernel, i, sizeof(cl_float), (void*)&clfwTypes->float_data), __LINE__);
             break;
 
             case 'c':
                 clfwTypes->char_data = va_arg(kernel_args_list, char);
-                ocl_exec_status(clSetKernelArg(ocl_kernel, i, sizeof(cl_char), (void*)&clfwTypes->char_data));
+                ocl_exec_status(clSetKernelArg(ocl_kernel, i, sizeof(cl_char), (void*)&clfwTypes->char_data), __LINE__);
             break;
 
             case 'u':
                 clfwTypes->uchar_data = va_arg(kernel_args_list, unsigned char);
-                ocl_exec_status(clSetKernelArg(ocl_kernel, i, sizeof(cl_uchar), (void*)&clfwTypes->uchar_data));
+                ocl_exec_status(clSetKernelArg(ocl_kernel, i, sizeof(cl_uchar), (void*)&clfwTypes->uchar_data), __LINE__);
             break;
         }
     }
@@ -505,7 +545,7 @@ void CLFW::ocl_execute_kernel(size_t ocl_global_work_size, size_t ocl_local_work
             0,
             NULL,
             NULL
-        ));
+        ), __LINE__);
     }
     sdkStopTimer(&ocl_timer);
 
@@ -542,7 +582,7 @@ cl_mem CLFW::ocl_create_buffer(int flag, size_t ocl_data_size)
         break;
     }
     
-    ocl_exec_status(ocl_result);
+    ocl_exec_status(ocl_result, __LINE__);
 
     return ocl_buffer;
 }
@@ -560,7 +600,7 @@ void CLFW::ocl_write_buffer(cl_mem ocl_data_buffer, size_t ocl_data_size, void* 
         0,
         NULL,
         NULL
-    ));
+    ), __LINE__);
 }
 
 void CLFW::ocl_read_buffer(cl_mem ocl_data_buffer, size_t ocl_data_size, void* host_ptr)
@@ -576,7 +616,7 @@ void CLFW::ocl_read_buffer(cl_mem ocl_data_buffer, size_t ocl_data_size, void* h
         0,
         NULL,
         NULL
-    ));
+    ), __LINE__);
 }
 
 void CLFW::ocl_release_buffer(cl_mem ocl_data_buffer)
@@ -607,6 +647,7 @@ void CLFW::host_alloc_mem(void** host_ptr, string host_type, size_t host_size)
             cerr << endl << "Failed To Allocate Memory To : " << *host_ptr << endl;
         else
             logger->print_log("Failed To Allocate Memory");
+
         exit(EXIT_FAILURE);
     }
 

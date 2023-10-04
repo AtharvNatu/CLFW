@@ -90,6 +90,8 @@ int main(void)
 
     clfw->ocl_initialize();
 
+	cout << endl << "Testing VecAdd ..." << endl;
+
 	size_t data_size = elements * sizeof(float);
 
 	clfw->host_alloc_mem((void**)&hostInput1, "float", data_size);

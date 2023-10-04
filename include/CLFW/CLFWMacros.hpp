@@ -4,13 +4,13 @@
 #define CL_MINIMUM_OPENCL_VERSION   120
 #define CL_TARGET_OPENCL_VERSION    120
 
-#define OCL_READ    1
-#define OCL_WRITE   2
+#define OCL_READ                    1
+#define OCL_WRITE                   2
 
-#define CLFW_SUCCESS EXIT_SUCCESS
-#define CLFW_FAILURE EXIT_FAILURE
+#define CLFW_SUCCESS                EXIT_SUCCESS
+#define CLFW_FAILURE                EXIT_FAILURE
 
-#define DEBUG       true
+#define DEBUG                       true
 
 #if defined(WIN32) || defined(_WIN32) || defined(WIN64) || defined(_WIN64)
     #define CLFW_OS 1

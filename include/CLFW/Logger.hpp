@@ -3,6 +3,7 @@
 #include <iostream>
 #include <ctime>
 #include <chrono>
+#include <cstdarg>
 
 #ifndef _STD_NS_    // namespace std
     #define _STD_NS_
@@ -18,7 +19,7 @@ class Logger
 
     // Member Functions
     void initialize(void);
-    void print_log(string);
+    void print_log(const char* fmt, ...);
     string get_current_time(void);
     void uninitialize(void);
 };
