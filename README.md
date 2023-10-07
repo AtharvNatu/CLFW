@@ -4,6 +4,8 @@ A Simple C and C++ based OpenCL Framework which provides custom C++ bindings to 
 
 Currently runs on Linux and Windows
 
+### Uses AMD ROCM 5.7 on Linux ###
+### Uses Khronos OpenCL SDK on Windows ### 
 
 ## Testing ##
 
