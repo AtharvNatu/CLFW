@@ -4,14 +4,19 @@ A Simple C and C++ based OpenCL Framework which provides custom C++ bindings to 
 
 Currently runs on Linux and Windows
 
-Tested On - 
 
-OS - 
-1) Windows 11 64-bit
-2) Arch Linux
-3) Kubuntu 22.04
+## Testing ##
 
-GPU - 
-1) AMD Radeon RX6600
-2) NVIDIA GeForce RTX 3060
-3) NVIDIA GeForce GTX 1650
+\### OS
+
+- [x] Windows 11 64-bit
+- [x] Arch Linux
+- [x] Kubuntu 22.04
+- [ ] macOS Ventura
+
+\### GPU
+
+- [x] AMD Radeon RX6600
+- [x] NVIDIA GeForce RTX 3060
+- [x] NVIDIA GeForce GTX 1650
+- [x] Intel UHD 630
