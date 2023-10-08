@@ -1,6 +1,6 @@
 #include "../../include/CLFW/CLFW.hpp"
 
-void CLFW::ocl_initialize(void)
+void CLFW::initialize(void)
 {
     // Code
     logger = new Logger();
@@ -40,7 +40,7 @@ void CLFW::ocl_exec_status(cl_int ocl_param, int line_no)
         if (ocl_param != CL_SUCCESS)
         {
             cerr << endl << "CLFW Error :  " << ocl_get_error_string(ocl_param) << " At Line No. " << line_no << endl;
-            this->ocl_uninitialize();
+            this->uninitialize();
             exit(CLFW_FAILURE);
         }   
     }
@@ -140,7 +140,7 @@ void CLFW::ocl_get_platforms(void)
         else
             logger->print_log("\nCLFW Error :  Failed To Allocate Memory To ocl_platforms ... Exiting !!!\n");
 
-        this->ocl_uninitialize();
+        this->uninitialize();
         exit(CLFW_FAILURE);
     }
 
@@ -153,7 +153,7 @@ void CLFW::ocl_get_platforms(void)
         else
             logger->print_log("\nCLFW Error :  No OpenCL Supported Platforms Found ... Exiting !!!\n");
 
-        this->ocl_uninitialize();
+        this->uninitialize();
         exit(CLFW_FAILURE);
     }
     else
@@ -183,7 +183,7 @@ void CLFW::ocl_set_platform(int platform)
         else
             logger->print_log("CLFW Error : Please Select Valid OpenCL Platform ... Exiting !!!");
 
-        this->ocl_uninitialize();
+        this->uninitialize();
         exit(CLFW_FAILURE);
     }
 }
@@ -208,7 +208,7 @@ void CLFW::ocl_get_devices(void)
                 cerr << endl << "CLFW Error :  Failed To Allocate Memory To ocl_platforms ... Exiting !!!" << endl;
             else
                 logger->print_log("\nCLFW Error :  Failed To Allocate Memory To ocl_platforms ... Exiting !!!\n");
-            this->ocl_uninitialize();
+            this->uninitialize();
             exit(CLFW_FAILURE);
         }
 
@@ -226,7 +226,7 @@ void CLFW::ocl_get_devices(void)
                 cerr << endl << "CLFW Error :  No OpenCL Supported Devices Found ... Exiting !!!" << endl;
             else
                 logger->print_log("\nCLFW Error :  Failed To Allocate Memory To ocl_platforms ... Exiting !!!\n");
-            this->ocl_uninitialize();
+            this->uninitialize();
             exit(CLFW_FAILURE);
         }
         else
@@ -258,7 +258,7 @@ void CLFW::ocl_set_device(int device)
         else
             logger->print_log("CLFW Error : Please Select Valid OpenCL Device ... Exiting !!!");
 
-        this->ocl_uninitialize();
+        this->uninitialize();
         exit(CLFW_FAILURE);
     }
 }
@@ -415,7 +415,7 @@ void CLFW::ocl_create_program(const char* ocl_kernel_file)
         else
             logger->print_log("\nCLFW Error :  Failed To Read OpenCL Kernel From File : ", ocl_kernel_file);
 
-        this->ocl_uninitialize();
+        this->uninitialize();
         exit(CLFW_FAILURE); 
     }
 
@@ -476,7 +476,7 @@ void CLFW::ocl_create_program(const char* ocl_kernel_file)
 
             free(buffer);
             buffer = NULL;
-            this->ocl_uninitialize();
+            this->uninitialize();
             exit(CLFW_FAILURE);
         }
     }
@@ -663,7 +663,7 @@ void CLFW::host_release_mem(void* host_ptr)
     }
 }
 
-void CLFW::ocl_uninitialize(void)
+void CLFW::uninitialize(void)
 {
     // Code
     if (ocl_kernel)

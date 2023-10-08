@@ -33,9 +33,8 @@
 
     class CLFW
     {
-        public:
-
         // Member Variable Declarations
+        private:
 
         // ClfwKernelDataTypes
         CLFWTypes *clfwTypes = nullptr;
@@ -69,11 +68,13 @@
         cl_int ocl_result;
         cl_mem ocl_buffer;
 
+        public:
+
         float ocl_gpu_time = 0.0f;
 
         // Member Function Prototypes
-        void ocl_initialize(void);
-        void ocl_uninitialize(void);
+        void initialize(void);
+        void uninitialize(void);
 
         void ocl_exec_status(cl_int ocl_result, int line_no);
         string ocl_get_error_string(cl_int ocl_result);

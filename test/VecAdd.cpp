@@ -88,7 +88,7 @@ int main(void)
     CLFW *clfw = nullptr;
 	clfw = new CLFW();
 
-    clfw->ocl_initialize();
+    clfw->initialize();
 
 	cout << endl << "Testing VecAdd ..." << endl;
 
@@ -133,7 +133,10 @@ int main(void)
 	clfw->host_release_mem(hostInput2);
 	clfw->host_release_mem(hostInput1);
 
-    clfw->ocl_uninitialize();
+    clfw->uninitialize();
+
+	delete clfw;
+	clfw = nullptr;
 
     return EXIT_SUCCESS;
 }
