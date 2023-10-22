@@ -4,9 +4,6 @@
 #define CL_MINIMUM_OPENCL_VERSION   120
 #define CL_TARGET_OPENCL_VERSION    120
 
-#define OCL_READ                    1
-#define OCL_WRITE                   2
-
 #define CLFW_SUCCESS                EXIT_SUCCESS
 #define CLFW_FAILURE                EXIT_FAILURE
 
