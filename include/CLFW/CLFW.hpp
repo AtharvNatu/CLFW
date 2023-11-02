@@ -95,7 +95,7 @@
         void ocl_execute_kernel(size_t ocl_global_work_size, size_t ocl_local_work_size);
 
         void host_alloc_mem(void** host_ptr, string host_type, size_t host_size);
-        void host_release_mem(void* host_ptr);
+        void host_release_mem(void** host_ptr);
 
         cl_mem ocl_create_buffer(int flag, size_t ocl_data_size);
         void ocl_write_buffer(cl_mem ocl_data_buffer, size_t ocl_data_size, void* host_ptr);

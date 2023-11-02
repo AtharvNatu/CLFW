@@ -78,9 +78,9 @@ void verify_output(float *host_arr, float *device_arr)
 	}
 
 	if (bAccuracy)
-		cout << endl << "Vector Addition Successful !!!" << endl;
+		cout << endl << "Vector Addition Successful ..." << endl;
 	else
-		cerr << endl << "Vector Addition Failed !!!" << endl;
+		cerr << endl << "Vector Addition Failed At Index : " << breakValue << " !!!" << endl;
 }
 
 int main(void)
@@ -128,10 +128,10 @@ int main(void)
 	clfw->ocl_release_buffer(deviceInput2);
 	clfw->ocl_release_buffer(deviceInput1);
 
-	clfw->host_release_mem(gold);
-	clfw->host_release_mem(hostOutput);
-	clfw->host_release_mem(hostInput2);
-	clfw->host_release_mem(hostInput1);
+	clfw->host_release_mem((void**)&gold);
+	clfw->host_release_mem((void**)&hostOutput);
+	clfw->host_release_mem((void**)&hostInput2);
+	clfw->host_release_mem((void**)&hostInput1);
 
     clfw->uninitialize();
 

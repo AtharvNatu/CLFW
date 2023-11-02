@@ -162,7 +162,7 @@ void CLFW::ocl_get_platforms(void)
         {
             cout << endl << "OPENCL PLATFORMS" << endl;
             cout << "-------------------------------------------------------------";
-            for (int i = 0; i < ocl_num_platforms; i++)
+            for (int i = 0; i < (int)ocl_num_platforms; i++)
             {
                 ocl_exec_status(clGetPlatformInfo(ocl_platforms[i], CL_PLATFORM_NAME, 500, &ocl_platform_info, NULL), __LINE__);
                 cout << endl << "Platform " << i + 1 << " : " << ocl_platform_info;
@@ -174,7 +174,7 @@ void CLFW::ocl_get_platforms(void)
 
 void CLFW::ocl_set_platform(int platform)
 {
-    if (platform <= ocl_num_platforms)
+    if (platform <= (int)ocl_num_platforms)
         ocl_platform_id = ocl_platforms[platform - 1];
     else
     {
@@ -235,7 +235,7 @@ void CLFW::ocl_get_devices(void)
             {
                 cout << endl << "OPENCL DEVICES" << endl;
                 cout << "-------------------------------------------------------------";
-                for (int i = 0; i < ocl_num_devices; i++)
+                for (int i = 0; i < (int)ocl_num_devices; i++)
                 {
                     clGetDeviceInfo(ocl_devices[i], CL_DEVICE_NAME, sizeof(ocl_dev_prop), &ocl_dev_prop, NULL);
                     cout << endl << "Device " << i + 1 << " : " << ocl_dev_prop;
@@ -249,7 +249,7 @@ void CLFW::ocl_get_devices(void)
 void CLFW::ocl_set_device(int device)
 {
     // Code
-    if (device <= ocl_num_devices)
+    if (device <= (int)ocl_num_devices)
         ocl_device_id = ocl_devices[device - 1];
     else
     {
@@ -503,22 +503,22 @@ void CLFW::ocl_create_kernel(const char* ocl_kernel_name, const char* ocl_kernel
             break;
 
             case 'i':
-                clfwTypes->int_data = va_arg(kernel_args_list, int);
+                clfwTypes->int_data = va_arg(kernel_args_list, cl_int);
                 ocl_exec_status(clSetKernelArg(ocl_kernel, i, sizeof(cl_int), (void*)&clfwTypes->int_data), __LINE__);
             break;
 
             case 'f':
-                clfwTypes->float_data = va_arg(kernel_args_list, float);
+                clfwTypes->float_data = va_arg(kernel_args_list, cl_float);
                 ocl_exec_status(clSetKernelArg(ocl_kernel, i, sizeof(cl_float), (void*)&clfwTypes->float_data), __LINE__);
             break;
 
             case 'c':
-                clfwTypes->char_data = va_arg(kernel_args_list, char);
+                clfwTypes->char_data = va_arg(kernel_args_list, cl_char);
                 ocl_exec_status(clSetKernelArg(ocl_kernel, i, sizeof(cl_char), (void*)&clfwTypes->char_data), __LINE__);
             break;
 
             case 'u':
-                clfwTypes->uchar_data = va_arg(kernel_args_list, unsigned char);
+                clfwTypes->uchar_data = va_arg(kernel_args_list, cl_uchar);
                 ocl_exec_status(clSetKernelArg(ocl_kernel, i, sizeof(cl_uchar), (void*)&clfwTypes->uchar_data), __LINE__);
             break;
         }
@@ -654,12 +654,12 @@ void CLFW::host_alloc_mem(void** host_ptr, string host_type, size_t host_size)
     memset(*host_ptr, 0, host_size);
 }
 
-void CLFW::host_release_mem(void* host_ptr)
+void CLFW::host_release_mem(void** host_ptr)
 {
     if (host_ptr)
     {
         delete host_ptr;
-        host_ptr = NULL;
+        *host_ptr = nullptr;
     }
 }
 

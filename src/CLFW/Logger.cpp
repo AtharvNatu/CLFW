@@ -16,7 +16,6 @@ void Logger::print_log(const char* fmt, ...)
 {
     // Variable Declarations
     va_list arg_list;
-    int ret;
 
     // Code
     if (log_file == nullptr)
@@ -26,7 +25,7 @@ void Logger::print_log(const char* fmt, ...)
     fprintf(log_file, "\t");
 
     va_start(arg_list, fmt);
-    ret = vfprintf(log_file, fmt, arg_list);
+    vfprintf(log_file, fmt, arg_list);
     va_end(arg_list);
 
     fprintf(log_file, "\n");

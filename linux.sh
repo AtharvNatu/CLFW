@@ -6,15 +6,15 @@ clear
 cd ./bin/
 
 # Uses Rocm 5.7.0
-g++ -w -c ../src/CLFW/*.cpp ../test/*.cpp -I "/opt/rocm-5.7.0/include/"
+g++ -Wall -c ../src/CLFW/*.cpp ../test/*.cpp -I "/opt/rocm-5.7.1/include/"
 
-g++ -o VecAdd *.o -L "/opt/rocm-5.7.0/lib/" -lOpenCL -lm
+g++ -o VecAdd *.o -L "/opt/rocm-5.7.1/lib/" -lOpenCL -lm
 
-cp VecAdd ../
+# cp VecAdd ../
 
-cd ..
+# cd ..
 
-clear
+# clear
 
-./VecAdd
+# ./VecAdd
 
