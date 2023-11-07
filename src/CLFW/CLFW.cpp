@@ -557,30 +557,19 @@ void CLFW::ocl_execute_kernel(size_t ocl_global_work_size, size_t ocl_local_work
     ocl_timer = NULL;
 }
 
+/// @brief Create an OpenCL buffer
+/// @param flag OpenCL standard compliant memory flag eg. `CL_MEM_READ_ONLY`, `CL_MEM_WRITE_ONLY`, `CL_MEM_READ_WRITE`, etc...
+/// @param ocl_data_size size of the buffer to be created in bytes
+/// @return cl_mem buffer object
 cl_mem CLFW::ocl_create_buffer(int flag, size_t ocl_data_size)
-{
-    switch(flag)
-    {
-        case OCL_READ:
-            ocl_buffer = clCreateBuffer(
-                ocl_context,
-                CL_MEM_READ_ONLY,
-                ocl_data_size,
-                NULL,
-                &ocl_result
-            );
-        break;
-
-        case OCL_WRITE:
-            ocl_buffer = clCreateBuffer(
-                ocl_context,
-                CL_MEM_WRITE_ONLY,
-                ocl_data_size,
-                NULL,
-                &ocl_result
-            );
-        break;
-    }
+{	
+	ocl_buffer = clCreateBuffer(
+		ocl_context,
+		flag,
+		ocl_data_size,
+		NULL,
+		&ocl_result
+	);
     
     ocl_exec_status(ocl_result, __LINE__);
 

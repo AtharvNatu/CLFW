@@ -104,9 +104,9 @@ int main(void)
 
 	vec_add_cpu(hostInput1, hostInput2, gold, elements);
 
-	deviceInput1 = clfw->ocl_create_buffer(OCL_READ, data_size);
-	deviceInput2 = clfw->ocl_create_buffer(OCL_READ, data_size);
-	deviceOutput = clfw->ocl_create_buffer(OCL_WRITE, data_size);
+	deviceInput1 = clfw->ocl_create_buffer(CL_MEM_READ_ONLY, data_size);
+	deviceInput2 = clfw->ocl_create_buffer(CL_MEM_READ_ONLY, data_size);
+	deviceOutput = clfw->ocl_create_buffer(CL_MEM_WRITE_ONLY, data_size);
 
 	clfw->ocl_create_program("./include/OpenCL-Kernels/VecAdd.cl");
 
