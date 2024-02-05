@@ -669,43 +669,43 @@ void CLFW::uninitialize(void)
     if (ocl_kernel)
     {
         clReleaseKernel(ocl_kernel);
-        ocl_kernel = NULL;
+        ocl_kernel = nullptr;
     }
 
     if (ocl_program)
     {
         clReleaseProgram(ocl_program);
-        ocl_program = NULL;
+        ocl_program = nullptr;
     }
 
     if (ocl_command_queue)
     {
         clReleaseCommandQueue(ocl_command_queue);
-        ocl_command_queue = NULL;
+        ocl_command_queue = nullptr;
     }
 
     if (ocl_context)
     {
         clReleaseContext(ocl_context);
-        ocl_context = NULL;
+        ocl_context = nullptr;
     }
 
     if (ocl_devices)
     {
         free(ocl_devices);
-        ocl_devices = NULL;
+        ocl_devices = nullptr;
     }
 
     if (ocl_platforms)
     {
         free(ocl_platforms);
-        ocl_platforms = NULL;
+        ocl_platforms = nullptr;
     }
 
     if (logger)
     {
         logger->print_log("Log File Closed");
         logger->uninitialize();
-        logger = NULL;
+        logger = nullptr;
     }
 }

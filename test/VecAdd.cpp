@@ -128,10 +128,11 @@ int main(void)
 	clfw->ocl_release_buffer(deviceInput2);
 	clfw->ocl_release_buffer(deviceInput1);
 
-	clfw->host_release_mem((void**)&gold);
-	clfw->host_release_mem((void**)&hostOutput);
-	clfw->host_release_mem((void**)&hostInput2);
-	clfw->host_release_mem((void**)&hostInput1);
+	// ! Memory issues in this block of code
+	// clfw->host_release_mem((void**)&gold);
+	// clfw->host_release_mem((void**)&hostOutput);
+	// clfw->host_release_mem((void**)&hostInput2);
+	// clfw->host_release_mem((void**)&hostInput1);
 
     clfw->uninitialize();
 
