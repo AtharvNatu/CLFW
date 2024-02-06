@@ -19,3 +19,9 @@
 #elif defined(__APPLE__)
     #define CLFW_OS 3
 #endif
+
+enum ERRORS
+{
+    LOG_ERROR = -1,
+    FILE_ERROR = -2
+};

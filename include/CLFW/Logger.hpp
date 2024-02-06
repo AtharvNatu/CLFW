@@ -5,21 +5,32 @@
 #include <chrono>
 #include <cstdarg>
 
-#ifndef _STD_NS_    // namespace std
-    #define _STD_NS_
-    using namespace std;
-#endif              // namespace std
+#include "CLFWMacros.hpp"
+
 
 class Logger
 {
+    private:
+        FILE *logFile = nullptr;
+        std::string getCurrentTime(void);
+
+    protected:
+        Logger(void);
+        static Logger* _logger;
+
     public:
+        //* Non-cloneable
+        Logger(Logger &obj) = delete;
 
-    // Member Variables
-    FILE *log_file = nullptr;
+        //* Non-assignable
+        void operator = (const Logger &) = delete;
 
-    // Member Functions
-    void initialize(void);
-    void print_log(const char* fmt, ...);
-    string get_current_time(void);
-    void uninitialize(void);
+        Logger(const std::string file);
+        ~Logger(void);
+
+        // Member Function Declarations
+        static Logger* getInstance(const std::string file);
+        void printLog(const char* fmt, ...);
+        void deleteInstance(void);
 };
+

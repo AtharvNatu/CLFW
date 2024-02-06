@@ -1,49 +1,77 @@
 #include "../../include/CLFW/Logger.hpp"
 
-void Logger::initialize(void)
+// Class Instance
+Logger *Logger::_logger = nullptr;
+
+Logger::Logger(const std::string file)
 {
-    log_file = fopen("Log.txt", "a+");
-    if (log_file == nullptr)
+    // Code
+    logFile = fopen(file.c_str(), "a+");
+    if (logFile == nullptr)
     {
-        cerr << endl << "Failed To Open Log File !!!" << endl;
-        exit(EXIT_FAILURE);
+        std::cerr << std::endl << "Failed To Open Log File : logs/Log.txt ... Exiting !!!" << std::endl;
+        exit(LOG_ERROR);
     }
-    else
-        print_log("Log File Opened");
 }
 
-void Logger::print_log(const char* fmt, ...)
+Logger *Logger::getInstance(const std::string file)
+{
+    // Code
+    if (_logger == nullptr)
+        _logger = new Logger(file);
+
+    return _logger;
+}
+
+void Logger::printLog(const char* fmt, ...)
 {
     // Variable Declarations
-    va_list arg_list;
+    va_list argList;
 
     // Code
-    if (log_file == nullptr)
+    if (logFile == nullptr)
         return;
 
-    fprintf(log_file, get_current_time().c_str());
-    fprintf(log_file, "\t");
+    // Print Current Time To File
+    fprintf(logFile, "%s", getCurrentTime().c_str());
+    fprintf(logFile, "\t");
 
-    va_start(arg_list, fmt);
-    vfprintf(log_file, fmt, arg_list);
-    va_end(arg_list);
-
-    fprintf(log_file, "\n");
-}
-
-string Logger::get_current_time(void)
-{
-    time_t current_time = chrono::system_clock::to_time_t(chrono::system_clock::now());
-    string str_time(30, '\0');
-    strftime(&str_time[0], str_time.size(), "%d/%m/%Y | %H:%M:%S", localtime(&current_time));
-    return str_time;
-}
-
-void Logger::uninitialize(void)
-{
-    if (log_file)
+    // Print Log Data
+    va_start(argList, fmt);
     {
-        fclose(log_file);
-        log_file = nullptr;
+        vfprintf(logFile, fmt, argList);
+    }
+    va_end(argList);
+
+    fprintf(logFile, "\n");
+}
+
+std::string Logger::getCurrentTime(void)
+{
+    // Code
+    time_t currentTime = std::chrono::system_clock::to_time_t(std::chrono::system_clock::now());
+    std::string strTime(30, '\0');
+    // strftime(&strTime[0], strTime.size(), "%d/%m/%Y | %I:%M:%S", localtime(&currentTime));
+    strftime(&strTime[0], strTime.size(), "%d/%m/%Y | %r", localtime(&currentTime));
+    return strTime;
+}
+
+void Logger::deleteInstance(void)
+{
+    delete _logger;
+    _logger = nullptr;
+}
+
+Logger::~Logger(void)
+{
+    // Code
+    if (logFile)
+    {
+        #if RELEASE
+            printLog("Log File Closed ...");
+        #endif
+        
+        fclose(logFile);
+        logFile = nullptr;
     }
 }

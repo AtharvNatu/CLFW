@@ -3,8 +3,7 @@
 void CLFW::initialize(void)
 {
     // Code
-    logger = new Logger();
-    logger->initialize();
+    logger = new Logger("")
 
     clfwTypes = new CLFWTypes();
 
@@ -656,9 +655,9 @@ void CLFW::host_alloc_mem(void** host_ptr, string host_type, size_t host_size)
 
 void CLFW::host_release_mem(void** host_ptr)
 {
-    if (host_ptr)
+    if (*host_ptr)
     {
-        delete host_ptr;
+        delete *host_ptr;
         *host_ptr = nullptr;
     }
 }

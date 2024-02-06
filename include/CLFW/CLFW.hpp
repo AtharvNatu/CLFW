@@ -77,7 +77,7 @@
         void uninitialize(void);
 
         void ocl_exec_status(cl_int ocl_result, int line_no);
-        string ocl_get_error_string(cl_int ocl_result);
+        std::string ocl_get_error_string(cl_int ocl_result);
 
         void ocl_get_platforms(void);
         void ocl_set_platform(int ocl_platform);
@@ -94,7 +94,7 @@
         void ocl_create_kernel(const char* ocl_kernel_name, const char* ocl_kernel_arg_types,...);
         void ocl_execute_kernel(size_t ocl_global_work_size, size_t ocl_local_work_size);
 
-        void host_alloc_mem(void** host_ptr, string host_type, size_t host_size);
+        void host_alloc_mem(void** host_ptr, std::string host_type, size_t host_size);
         void host_release_mem(void** host_ptr);
 
         cl_mem ocl_create_buffer(int flag, size_t ocl_data_size);
