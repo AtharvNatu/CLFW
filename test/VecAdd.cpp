@@ -2,7 +2,7 @@
 
 // Global Variable Declarations
 const int elements = 11444777;
-const int local_size = 256;
+const int localSize = 256;
 
 float* hostInput1 = NULL;
 float* hostInput2 = NULL;
@@ -13,9 +13,19 @@ cl_mem deviceInput1 = NULL;
 cl_mem deviceInput2 = NULL;
 cl_mem deviceOutput = NULL;
 
-float cpu_time = 0.0f;
+float cpuTime = 0.0f;
 
-void populate_array(float* arr, int len)
+const char* kernelSourceCode = 
+	"__kernel void vecAddGPU(__global float *in1, __global float* in2, __global float *out, int len)" \
+	"{" \
+		"int i = get_global_id(0);" \
+		"if (i < len)" \
+		"{" \
+			"out[i] = in1[i] + in2[i];" \
+		"}" \
+	"}";
+
+void populateArray(float* arr, int len)
 {
 	// Code
 	const float fscale = 1.0f / (float)RAND_MAX;
@@ -26,7 +36,7 @@ void populate_array(float* arr, int len)
 	}
 }
 
-void vec_add_cpu(const float* arr1, const float* arr2, float* out, int len)
+void vecAddCPU(const float* arr1, const float* arr2, float* out, int len)
 {
 	// Code
 	StopWatchInterface* timer = NULL;
@@ -39,25 +49,12 @@ void vec_add_cpu(const float* arr1, const float* arr2, float* out, int len)
 	}
 
 	sdkStopTimer(&timer);
-	cpu_time = sdkGetTimerValue(&timer);
+	cpuTime = sdkGetTimerValue(&timer);
 	sdkDeleteTimer(&timer);
 	timer = NULL;
 }
 
-size_t round_global_size(int local_size, unsigned int global_size)
-{
-    // Round Global Size To Nearest Multiple Of Local Size
-
-	// Code
-	unsigned int remainder = global_size % local_size;
-
-	if (remainder == 0)
-		return global_size;
-	else
-		return global_size + local_size - remainder;
-}
-
-void verify_output(float *host_arr, float *device_arr)
+void verifyOutput(float *hostArr, float *deviceArr)
 {
 	// Comparison
 	const float epsilon = 0.000001f;
@@ -66,8 +63,8 @@ void verify_output(float *host_arr, float *device_arr)
 
 	for (int i = 0; i < elements; i++)
 	{
-		float val1 = host_arr[i];
-		float val2 = device_arr[i];
+		float val1 = hostArr[i];
+		float val2 = deviceArr[i];
 
 		if (fabs(val1 - val2) > epsilon)
 		{
@@ -99,40 +96,35 @@ int main(void)
 	clfw->hostMemAlloc((void**)&hostOutput, "float", data_size);
 	clfw->hostMemAlloc((void**)&gold, "float", data_size);
 
-	populate_array(hostInput1, elements);
-	populate_array(hostInput2, elements);
+	populateArray(hostInput1, elements);
+	populateArray(hostInput2, elements);
 
-	vec_add_cpu(hostInput1, hostInput2, gold, elements);
+	vecAddCPU(hostInput1, hostInput2, gold, elements);
 
 	deviceInput1 = clfw->oclCreateBuffer(CL_MEM_READ_ONLY, data_size);
 	deviceInput2 = clfw->oclCreateBuffer(CL_MEM_READ_ONLY, data_size);
 	deviceOutput = clfw->oclCreateBuffer(CL_MEM_WRITE_ONLY, data_size);
 
-	clfw->oclCreateProgram("./include/OpenCL-Kernels/VecAdd.cl");
+	clfw->oclCreateProgram(kernelSourceCode);
 
-	clfw->oclCreateKernel("vec_add_gpu", "bbbi", deviceInput1, deviceInput2, deviceOutput, elements);
+	clfw->oclCreateKernel("vecAddGPU", "bbbi", deviceInput1, deviceInput2, deviceOutput, elements);
 
 	clfw->oclWriteBuffer(deviceInput1, data_size, hostInput1);
 	clfw->oclWriteBuffer(deviceInput2, data_size, hostInput2);
 
-	double gpuTime = clfw->oclExecuteKernel(round_global_size(local_size, elements), local_size);
+	double gpuTime = clfw->oclExecuteKernel(clfw->getGlobalWorkSize(localSize, elements), localSize);
 
 	clfw->oclReadBuffer(deviceOutput, data_size, hostOutput);
 
-	verify_output(gold, hostOutput);
+	verifyOutput(gold, hostOutput);
 
-	std::cout << std::endl << "Time Required For CPU : " << cpu_time << " ms" << std::endl;
+	std::cout << std::endl << "Time Required For CPU : " << cpuTime << " ms" << std::endl;
 	std::cout << std::endl << "Time Required For GPU (OpenCL) : " << gpuTime << " ms" << std::endl << std::endl;
 
 	clfw->oclReleaseBuffer(deviceOutput);
 	clfw->oclReleaseBuffer(deviceInput2);
 	clfw->oclReleaseBuffer(deviceInput1);
 
-	// clfw->hostMemFree((void**)&gold);
-	// clfw->hostMemFree((void**)&hostOutput);
-	// clfw->hostMemFree((void**)&hostInput2);
-	// clfw->hostMemFree((void**)&hostInput1);
-	
 	clfw->hostMemFree(&gold);
 	clfw->hostMemFree(&hostOutput);
 	clfw->hostMemFree(&hostInput2);

@@ -78,10 +78,13 @@
             void oclCreateCommandQueue(void);
             void oclCreateProgram(const char* oclKernelFile);
             void oclCreateKernel(const char* oclKernelName, const char *oclKernelArgTypes,...);
+            size_t getGlobalWorkSize(int localSize, unsigned int globalSize);
             double oclExecuteKernel(size_t oclGlobalWorkSize, size_t oclLocalWorkSize);
 
             void hostMemAlloc(void** hostPtr, std::string hostType, size_t hostSize);
-            void hostMemFree(float** hostPtr);
+
+            template <typename T>
+            void hostMemFree(T **hostPtr);
 
             cl_mem oclCreateBuffer(int flag, size_t oclDataSize);
             void oclWriteBuffer(cl_mem oclDataBuffer, size_t oclDataSize, void* hostPtr);
