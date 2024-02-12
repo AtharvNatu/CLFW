@@ -50,6 +50,7 @@
             cl_kernel oclKernel;
             cl_int oclResult;
             cl_mem oclBuffer;
+            cl_image_format oclImageFormat;
             cl_event timeEvent;
             cl_ulong startTime, endTime;
 
@@ -72,14 +73,15 @@
             void oclSetDevice(int oclDevice);
 
             void oclGetDeviceProperties(void);
-            const char *oclReadKernelFile(const char *oclKernelFile);
+            void oclCreateImage(cl_mem *devPtr, cl_mem_flags flags, int imageWidth, int imageHeight, unsigned char *imagePixels);
+            void oclReadImage(cl_mem *devImagePtr, int imageWidth, int imageHeight, unsigned char *hostArr);
 
             void oclCreateContext(void);
             void oclCreateCommandQueue(void);
             void oclCreateProgram(const char* oclKernelFile);
             void oclCreateKernel(const char* oclKernelName, const char *oclKernelArgTypes,...);
             size_t getGlobalWorkSize(int localSize, unsigned int globalSize);
-            double oclExecuteKernel(size_t oclGlobalWorkSize, size_t oclLocalWorkSize);
+            double oclExecuteKernel(size_t oclGlobalWorkSize, size_t oclLocalWorkSize, int workDimensions);
 
             void hostMemAlloc(void** hostPtr, std::string hostType, size_t hostSize);
 

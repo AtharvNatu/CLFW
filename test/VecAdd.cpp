@@ -89,32 +89,32 @@ int main(void)
 
 	std::cout << std::endl << "Testing VecAdd ..." << std::endl;
 
-	size_t data_size = elements * sizeof(float);
+	size_t dataSize = elements * sizeof(float);
 
-	clfw->hostMemAlloc((void**)&hostInput1, "float", data_size);
-	clfw->hostMemAlloc((void**)&hostInput2, "float", data_size);
-	clfw->hostMemAlloc((void**)&hostOutput, "float", data_size);
-	clfw->hostMemAlloc((void**)&gold, "float", data_size);
+	clfw->hostMemAlloc((void**)&hostInput1, "float", dataSize);
+	clfw->hostMemAlloc((void**)&hostInput2, "float", dataSize);
+	clfw->hostMemAlloc((void**)&hostOutput, "float", dataSize);
+	clfw->hostMemAlloc((void**)&gold, "float", dataSize);
 
 	populateArray(hostInput1, elements);
 	populateArray(hostInput2, elements);
 
 	vecAddCPU(hostInput1, hostInput2, gold, elements);
 
-	deviceInput1 = clfw->oclCreateBuffer(CL_MEM_READ_ONLY, data_size);
-	deviceInput2 = clfw->oclCreateBuffer(CL_MEM_READ_ONLY, data_size);
-	deviceOutput = clfw->oclCreateBuffer(CL_MEM_WRITE_ONLY, data_size);
+	deviceInput1 = clfw->oclCreateBuffer(CL_MEM_READ_ONLY, dataSize);
+	deviceInput2 = clfw->oclCreateBuffer(CL_MEM_READ_ONLY, dataSize);
+	deviceOutput = clfw->oclCreateBuffer(CL_MEM_WRITE_ONLY, dataSize);
 
 	clfw->oclCreateProgram(kernelSourceCode);
 
 	clfw->oclCreateKernel("vecAddGPU", "bbbi", deviceInput1, deviceInput2, deviceOutput, elements);
 
-	clfw->oclWriteBuffer(deviceInput1, data_size, hostInput1);
-	clfw->oclWriteBuffer(deviceInput2, data_size, hostInput2);
+	clfw->oclWriteBuffer(deviceInput1, dataSize, hostInput1);
+	clfw->oclWriteBuffer(deviceInput2, dataSize, hostInput2);
 
-	double gpuTime = clfw->oclExecuteKernel(clfw->getGlobalWorkSize(localSize, elements), localSize);
+	double gpuTime = clfw->oclExecuteKernel(clfw->getGlobalWorkSize(localSize, elements), localSize, 1);
 
-	clfw->oclReadBuffer(deviceOutput, data_size, hostOutput);
+	clfw->oclReadBuffer(deviceOutput, dataSize, hostOutput);
 
 	verifyOutput(gold, hostOutput);
 

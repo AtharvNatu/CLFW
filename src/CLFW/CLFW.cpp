@@ -337,6 +337,7 @@ void CLFW::oclGetDeviceProperties(void)
             sizeof(oclMemSize),
             &oclMemSize,
             NULL));
+        // std::cout << std::endl << "GPU Memory : " << (unsigned long long) oclMemSize / 1000000000 << " GB" << std::endl;
         if (oclMemSize > 1000000 && oclMemSize < 1000000000)
             std::cout << std::endl << "GPU Memory : " << (unsigned long long)oclMemSize / 1000000 << " MB" << std::endl;
         else
@@ -352,6 +353,47 @@ void CLFW::oclGetDeviceProperties(void)
 
         std::cout << "-------------------------------------------------------------" << std::endl;
     }
+}
+
+void CLFW::oclCreateImage(cl_mem *devImagePtr, cl_mem_flags flags, int imageWidth, int imageHeight, unsigned char *imagePixels)
+{
+    // Code
+    oclImageFormat.image_channel_order = CL_BGRA;
+    oclImageFormat.image_channel_data_type = CL_UNSIGNED_INT8;
+
+    *devImagePtr = clCreateImage2D(
+        oclContext,
+        flags,
+        &oclImageFormat,
+        imageWidth,
+        imageHeight,
+        0,
+        imagePixels,
+        &oclResult
+    );
+    oclExecStatus(oclResult);
+}
+
+void CLFW::oclReadImage(cl_mem *devImagePtr, int imageWidth, int imageHeight, unsigned char *hostArr)
+{
+    // Variable Declarations
+    const size_t origin[3] = { 0, 0, 0 };
+	const size_t region[3] = { imageWidth, imageHeight, 1 };
+
+    // Code
+    oclExecStatus(clEnqueueReadImage(
+        oclCommandQueue,
+        *devImagePtr,
+        CL_TRUE,
+        origin,
+        region,
+        0,
+        0,
+        hostArr,
+        0,
+        NULL,
+        NULL
+    ));
 }
 
 void CLFW::oclCreateContext(void)
@@ -376,57 +418,6 @@ void CLFW::oclCreateCommandQueue(void)
         CL_QUEUE_PROFILING_ENABLE,
         &oclResult);
     oclExecStatus(oclResult);
-}
-
-const char *CLFW::oclReadKernelFile(const char *oclKernelFile)
-{
-    // Variable Declarations
-    char ch;
-    int i = 0;
-
-    // Code
-    if (oclKernelFile == NULL)
-        return NULL;
-
-    FILE *oclKernel_fp = NULL;
-
-#if (CLFW_OS == 1)
-    fopen_s(&oclKernel_fp, oclKernelFile, "r");
-#else
-    oclKernel_fp = fopen(oclKernelFile, "r");
-#endif
-
-    if (oclKernel_fp == NULL)
-    {
-        if (DEBUG)
-        {
-            std::cerr << std::endl
-                      << "CLFW Error :  Failed To Open OpenCL Kernel File " << oclKernelFile << " ... Exiting !!!" << std::endl;
-            return NULL;
-        }
-    }
-
-    int file_length = std::filesystem::file_size(oclKernelFile);
-
-    char *source_code = (char *)calloc(1, file_length + 1);
-    if (source_code == NULL)
-    {
-        if (DEBUG)
-        {
-            std::cerr << std::endl
-                      << "CLFW Error :  Failed To Allocate Memory To OpenCL Kernel Source Code ... Exiting !!!" << std::endl;
-            return NULL;
-        }
-    }
-
-    while ((ch = fgetc(oclKernel_fp)) != EOF)
-        source_code[i++] = ch;
-    *(source_code + i) = '\0';
-
-    fclose(oclKernel_fp);
-    oclKernel_fp = NULL;
-
-    return (const char *)source_code;
 }
 
 void CLFW::oclCreateProgram(const char *oclKernelSource)
@@ -544,13 +535,13 @@ size_t CLFW::getGlobalWorkSize(int localSize, unsigned int globalSize)
 		return globalSize + localSize - remainder;
 }
 
-double CLFW::oclExecuteKernel(size_t oclGlobalWorkSize, size_t oclLocalWorkSize)
+double CLFW::oclExecuteKernel(size_t oclGlobalWorkSize, size_t oclLocalWorkSize, int workDimensions)
 {
     // Code
     oclExecStatus(clEnqueueNDRangeKernel(
         oclCommandQueue,
         oclKernel,
-        1,
+        workDimensions,
         NULL,
         &oclGlobalWorkSize,
         &oclLocalWorkSize,
@@ -658,6 +649,7 @@ void CLFW::hostMemAlloc(void **hostPtr, std::string hostType, size_t hostSize)
 }
 
 template <typename T>
+
 void CLFW::hostMemFree(T **hostPtr)
 {
     // Code
