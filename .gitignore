@@ -3,4 +3,5 @@
 *.exe
 *.DS_Store
 
-# /bin/*
+VecAdd
+/bin/*
