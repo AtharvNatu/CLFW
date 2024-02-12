@@ -1,51 +1,43 @@
 #include "../../include/CLFW/CLFW.hpp"
 
+CLFW::CLFW(void)
+{
+    // Code
+    clfwTypes = new CLFWTypes();
+}
+
 void CLFW::initialize(void)
 {
     // Code
-    logger = new Logger("")
+    this->oclGetPlatforms();
+    std::cout << std::endl << "Select Preferred Platform : ";
+    std::cin >> user_platform;
+    this->oclSetPlatform(user_platform);
 
-    clfwTypes = new CLFWTypes();
+    this->oclGetDevices();
+    std::cout << std::endl << "Select Preferred Device : ";
+    std::cin >> user_device;
+    this->oclSetDevice(user_device);
 
-    ocl_get_platforms();
+    this->oclGetDeviceProperties();
 
-    if (DEBUG)
-    {
-        cout << endl << "Select Preferred Platform : ";
-        cin >> user_platform;
-    }
-    ocl_set_platform(user_platform);
+    this->oclCreateContext();
 
-    ocl_get_devices();
-    if (DEBUG)
-    {
-        cout << endl << "Select Preferred Device : ";
-        cin >> user_device;
-    }
-    ocl_set_device(user_device);
-
-    ocl_dev_properties();
-
-    ocl_create_context();
-
-    ocl_create_command_queue();
+    this->oclCreateCommandQueue();
 }
 
-void CLFW::ocl_exec_status(cl_int ocl_param, int line_no)
+void CLFW::oclExecStatus(cl_int ocl_param)
 {
     // Code
-    if (DEBUG)
+    if (ocl_param != CL_SUCCESS)
     {
-        if (ocl_param != CL_SUCCESS)
-        {
-            cerr << endl << "CLFW Error :  " << ocl_get_error_string(ocl_param) << " At Line No. " << line_no << endl;
-            this->uninitialize();
-            exit(CLFW_FAILURE);
-        }   
+        std::cerr << std::endl << "CLFW Error :  " << oclGetErrorString(ocl_param) << std::endl;
+        this->uninitialize();
+        exit(CLFW_FAILURE);
     }
 }
 
-string CLFW::ocl_get_error_string(cl_int error)
+std::string CLFW::oclGetErrorString(cl_int error)
 {
     // Code
     switch(error)
@@ -80,7 +72,7 @@ string CLFW::ocl_get_error_string(cl_int error)
         case -34: return "CL_INVALID_CONTEXT";
         case -35: return "CL_INVALID_QUEUE_PROPERTIES";
         case -36: return "CL_INVALID_COMMAND_QUEUE";
-        case -37: return "CL_INVALID_HOST_PTR";
+        case -37: return "CL_INVALID_hostPtr";
         case -38: return "CL_INVALID_MEM_OBJECT";
         case -39: return "CL_INVALID_IMAGE_FORMAT_DESCRIPTOR";
         case -40: return "CL_INVALID_IMAGE_SIZE";
@@ -126,32 +118,24 @@ string CLFW::ocl_get_error_string(cl_int error)
     }
 }
 
-void CLFW::ocl_get_platforms(void)
+void CLFW::oclGetPlatforms(void)
 {
     // Code
-    ocl_exec_status(clGetPlatformIDs(0, NULL, &ocl_num_platforms), __LINE__);
+    oclExecStatus(clGetPlatformIDs(0, NULL, &oclNumPlatforms));
     
-    ocl_platforms = (cl_platform_id*)malloc(ocl_num_platforms * sizeof(cl_platform_id));
-    if (ocl_platforms == NULL)
+    oclPlatforms = (cl_platform_id*)malloc(oclNumPlatforms * sizeof(cl_platform_id));
+    if (oclPlatforms == NULL)
     {
-        if (DEBUG)
-            cerr << endl << "CLFW Error :  Failed To Allocate Memory To ocl_platforms ... Exiting !!!" << endl;
-        else
-            logger->print_log("\nCLFW Error :  Failed To Allocate Memory To ocl_platforms ... Exiting !!!\n");
-
+        std::cerr << std::endl << "CLFW Error :  Failed To Allocate Memory To oclPlatforms ... Exiting !!!" << std::endl;
         this->uninitialize();
         exit(CLFW_FAILURE);
     }
 
-    ocl_exec_status(clGetPlatformIDs(ocl_num_platforms, ocl_platforms, NULL), __LINE__);
+    oclExecStatus(clGetPlatformIDs(oclNumPlatforms, oclPlatforms, NULL));
 
-    if (ocl_num_platforms == 0)
+    if (oclNumPlatforms == 0)
     {
-        if (DEBUG)
-            cerr << endl << "CLFW Error :  No OpenCL Supported Platforms Found ... Exiting !!!" << endl;
-        else
-            logger->print_log("\nCLFW Error :  No OpenCL Supported Platforms Found ... Exiting !!!\n");
-
+        std::cerr << std::endl << "CLFW Error :  No OpenCL Supported Platforms Found ... Exiting !!!" << std::endl;
         this->uninitialize();
         exit(CLFW_FAILURE);
     }
@@ -159,282 +143,252 @@ void CLFW::ocl_get_platforms(void)
     {
         if (DEBUG)
         {
-            cout << endl << "OPENCL PLATFORMS" << endl;
-            cout << "-------------------------------------------------------------";
-            for (int i = 0; i < (int)ocl_num_platforms; i++)
+            std::cout << std::endl << "OPENCL PLATFORMS" << std::endl;
+            std::cout << "-------------------------------------------------------------";
+            for (int i = 0; i < (int)oclNumPlatforms; i++)
             {
-                ocl_exec_status(clGetPlatformInfo(ocl_platforms[i], CL_PLATFORM_NAME, 500, &ocl_platform_info, NULL), __LINE__);
-                cout << endl << "Platform " << i + 1 << " : " << ocl_platform_info;
+                oclExecStatus(clGetPlatformInfo(oclPlatforms[i], CL_PLATFORM_NAME, 500, &oclPlatformInfo, NULL));
+                std::cout << std::endl << "Platform " << i + 1 << " : " << oclPlatformInfo;
             }
-            cout << endl << "-------------------------------------------------------------" << endl;
+            std::cout << std::endl << "-------------------------------------------------------------" << std::endl;
         }
     }
 }
 
-void CLFW::ocl_set_platform(int platform)
+void CLFW::oclSetPlatform(int platform)
 {
-    if (platform <= (int)ocl_num_platforms)
-        ocl_platform_id = ocl_platforms[platform - 1];
+    if (platform <= (int)oclNumPlatforms)
+        oclPlatformId = oclPlatforms[platform - 1];
     else
     {
-        if (DEBUG)
-            cerr << endl << "CLFW Error : Please Select Valid OpenCL Platform ... Exiting !!!" << endl;
-        else
-            logger->print_log("CLFW Error : Please Select Valid OpenCL Platform ... Exiting !!!");
-
+        std::cerr << std::endl << "CLFW Error : Please Select Valid OpenCL Platform ... Exiting !!!" << std::endl;
         this->uninitialize();
         exit(CLFW_FAILURE);
     }
 }
 
-void CLFW::ocl_get_devices(void)
+void CLFW::oclGetDevices(void)
 {
     // Code
-    if (ocl_num_platforms > 0)
+    if (oclNumPlatforms > 0)
     {
-        ocl_exec_status(clGetDeviceIDs(
-            ocl_platform_id,
+        oclExecStatus(clGetDeviceIDs(
+            oclPlatformId,
             CL_DEVICE_TYPE_GPU,
             0,
             NULL,
-            &ocl_num_devices
-        ), __LINE__);
+            &oclNumDevices
+        ));
 
-        ocl_devices = (cl_device_id*)malloc(ocl_num_devices * sizeof(cl_device_id));
-        if (ocl_devices == NULL)
+        oclDevices = (cl_device_id*)malloc(oclNumDevices * sizeof(cl_device_id));
+        if (oclDevices == NULL)
         {
-            if (DEBUG)
-                cerr << endl << "CLFW Error :  Failed To Allocate Memory To ocl_platforms ... Exiting !!!" << endl;
-            else
-                logger->print_log("\nCLFW Error :  Failed To Allocate Memory To ocl_platforms ... Exiting !!!\n");
+            std::cerr << std::endl << "CLFW Error :  Failed To Allocate Memory To oclPlatforms ... Exiting !!!" << std::endl;
             this->uninitialize();
             exit(CLFW_FAILURE);
         }
 
-        ocl_exec_status(clGetDeviceIDs(
-            ocl_platform_id,
+        oclExecStatus(clGetDeviceIDs(
+            oclPlatformId,
             CL_DEVICE_TYPE_GPU,
-            ocl_num_devices,
-            ocl_devices,
+            oclNumDevices,
+            oclDevices,
             NULL
-        ), __LINE__);
+        ));
 
-        if (ocl_num_devices == 0)
+        if (oclNumDevices == 0)
         {
-            if (DEBUG)
-                cerr << endl << "CLFW Error :  No OpenCL Supported Devices Found ... Exiting !!!" << endl;
-            else
-                logger->print_log("\nCLFW Error :  Failed To Allocate Memory To ocl_platforms ... Exiting !!!\n");
+            std::cerr << std::endl << "CLFW Error :  No OpenCL Supported Devices Found ... Exiting !!!" << std::endl;
             this->uninitialize();
             exit(CLFW_FAILURE);
         }
         else
         {
-            if (DEBUG)
+            std::cout << std::endl << "OPENCL DEVICES" << std::endl;
+            std::cout << "-------------------------------------------------------------";
+            for (int i = 0; i < (int)oclNumDevices; i++)
             {
-                cout << endl << "OPENCL DEVICES" << endl;
-                cout << "-------------------------------------------------------------";
-                for (int i = 0; i < (int)ocl_num_devices; i++)
-                {
-                    clGetDeviceInfo(ocl_devices[i], CL_DEVICE_NAME, sizeof(ocl_dev_prop), &ocl_dev_prop, NULL);
-                    cout << endl << "Device " << i + 1 << " : " << ocl_dev_prop;
-                }
-                cout << endl << "-------------------------------------------------------------" << endl;
+                clGetDeviceInfo(oclDevices[i], CL_DEVICE_NAME, sizeof(oclDevProp), &oclDevProp, NULL);
+                std::cout << std::endl << "Device " << i + 1 << " : " << oclDevProp;
             }
+            std::cout << std::endl << "-------------------------------------------------------------" << std::endl;
         }
     }
 }
 
-void CLFW::ocl_set_device(int device)
+void CLFW::oclSetDevice(int device)
 {
     // Code
-    if (device <= (int)ocl_num_devices)
-        ocl_device_id = ocl_devices[device - 1];
+    if (device <= (int)oclNumDevices)
+        oclDeviceId = oclDevices[device - 1];
     else
     {
-        if (DEBUG)
-            cerr << endl << "CLFW Error : Please Select Valid OpenCL Device ... Exiting !!!" << endl;
-        else
-            logger->print_log("CLFW Error : Please Select Valid OpenCL Device ... Exiting !!!");
-
+        std::cerr << std::endl << "CLFW Error : Please Select Valid OpenCL Device ... Exiting !!!" << std::endl;
         this->uninitialize();
         exit(CLFW_FAILURE);
     }
 }
 
-void CLFW::ocl_dev_properties(void)
+void CLFW::oclGetDeviceProperties(void)
 {   
     // Code
     if (DEBUG)
     {
-        cout << endl << "DEVICE PROPERTIES" << endl;
-        cout << "-------------------------------------------------------------";
-        ocl_exec_status(clGetDeviceInfo(
-            ocl_device_id,
+        std::cout << std::endl << "DEVICE PROPERTIES" << std::endl;
+        std::cout << "-------------------------------------------------------------";
+        oclExecStatus(clGetDeviceInfo(
+            oclDeviceId,
             CL_DEVICE_NAME,
-            sizeof(ocl_dev_prop),
-            &ocl_dev_prop,
+            sizeof(oclDevProp),
+            &oclDevProp,
             NULL
-        ), __LINE__);
-        cout << endl << "GPU Device Name : " << ocl_dev_prop << endl;
+        ));
+        std::cout << std::endl << "GPU Device Name : " << oclDevProp << std::endl;
 
-        ocl_exec_status(clGetDeviceInfo(
-            ocl_device_id,
+        oclExecStatus(clGetDeviceInfo(
+            oclDeviceId,
             CL_DEVICE_VENDOR,
-            sizeof(ocl_dev_prop),
-            &ocl_dev_prop,
+            sizeof(oclDevProp),
+            &oclDevProp,
             NULL
-        ), __LINE__);
-        cout << endl << "GPU Device Vendor : " << ocl_dev_prop << endl;
+        ));
+        std::cout << std::endl << "GPU Device Vendor : " << oclDevProp << std::endl;
 
-        ocl_exec_status(clGetDeviceInfo(
-            ocl_device_id,
+        oclExecStatus(clGetDeviceInfo(
+            oclDeviceId,
             CL_DEVICE_VERSION,
-            sizeof(ocl_dev_prop),
-            &ocl_dev_prop,
+            sizeof(oclDevProp),
+            &oclDevProp,
             NULL
-        ), __LINE__);
-        cout << endl << "GPU Device Version : " << ocl_dev_prop << endl;
+        ));
+        std::cout << std::endl << "GPU Device Version : " << oclDevProp << std::endl;
 
-        ocl_exec_status(clGetDeviceInfo(
-            ocl_device_id,
+        oclExecStatus(clGetDeviceInfo(
+            oclDeviceId,
             CL_DEVICE_GLOBAL_MEM_SIZE,
-            sizeof(ocl_mem_size),
-            &ocl_mem_size,
+            sizeof(oclMemSize),
+            &oclMemSize,
             NULL
-        ), __LINE__);
-        cout << endl << "GPU Memory : " << (unsigned long long) ocl_mem_size / 1000000000 << " GB" << endl;
+        ));
+        std::cout << std::endl << "GPU Memory : " << (unsigned long long) oclMemSize / 1000000000 << " GB" << std::endl;
 
-        ocl_exec_status(clGetDeviceInfo(
-            ocl_device_id,
+        oclExecStatus(clGetDeviceInfo(
+            oclDeviceId,
             CL_DEVICE_MAX_COMPUTE_UNITS,
-            sizeof(ocl_compute_units),
-            &ocl_compute_units,
+            sizeof(oclComputeUnits),
+            &oclComputeUnits,
             NULL
-        ), __LINE__);
-        cout << endl << "GPU Compute Units : " << ocl_compute_units << endl;
+        ));
+        std::cout << std::endl << "GPU Compute Units : " << oclComputeUnits << std::endl;
 
-        cout << "-------------------------------------------------------------" << endl;
+        std::cout << "-------------------------------------------------------------" << std::endl;
     }
 }
 
-void CLFW::ocl_create_context(void)
+void CLFW::oclCreateContext(void)
 {
     // Code
-    ocl_context = clCreateContext(
+    oclContext = clCreateContext(
         NULL,
         1,
-        &ocl_device_id,
+        &oclDeviceId,
         NULL,
         NULL,
-        &ocl_result
+        &oclResult
     );
-    ocl_exec_status(ocl_result, __LINE__);
+    oclExecStatus(oclResult);
 }
 
-void CLFW::ocl_create_command_queue(void)
+void CLFW::oclCreateCommandQueue(void)
 {
     // Code
-    ocl_command_queue = clCreateCommandQueue(
-        ocl_context,
-        ocl_device_id,
+    oclCommandQueue = clCreateCommandQueue(
+        oclContext,
+        oclDeviceId,
         0,
-        &ocl_result     
+        &oclResult     
     );
-    ocl_exec_status(ocl_result, __LINE__);
+    oclExecStatus(oclResult);
 }
 
-const char *CLFW::ocl_read_kernel_from_file(const char *ocl_kernel_file)
+const char *CLFW::oclReadKernelFile(const char *oclKernelFile)
 {
     // Variable Declarations
     char ch;
     int i = 0;
 
     // Code
-    if (ocl_kernel_file == NULL)
+    if (oclKernelFile == NULL)
         return NULL;
 
-    FILE *ocl_kernel_fp = NULL;
+    FILE *oclKernel_fp = NULL;
 
     #if (CLFW_OS == 1)
-        fopen_s(&ocl_kernel_fp, ocl_kernel_file, "r");
+        fopen_s(&oclKernel_fp, oclKernelFile, "r");
     #else
-        ocl_kernel_fp = fopen(ocl_kernel_file, "r");
+        oclKernel_fp = fopen(oclKernelFile, "r");
     #endif
 
-    if (ocl_kernel_fp == NULL)
+    if (oclKernel_fp == NULL)
     {
         if (DEBUG)
         {
-            cerr << endl << "CLFW Error :  Failed To Open OpenCL Kernel File " << ocl_kernel_file << " ... Exiting !!!" << endl;
+            std::cerr << std::endl << "CLFW Error :  Failed To Open OpenCL Kernel File " << oclKernelFile << " ... Exiting !!!" << std::endl;
             return NULL;
-        }
-        else
-        {
-            logger->print_log("\nCLFW Error :  Failed To Open OpenCL Kernel File ", ocl_kernel_file, " ... Exiting !!!\n");
-            return NULL;
-        }          
+        }      
     }
 
-    int file_length = filesystem::file_size(ocl_kernel_file);
+    int file_length = std::filesystem::file_size(oclKernelFile);
 
     char *source_code = (char *)calloc(1, file_length + 1);
     if (source_code == NULL)
     {
         if (DEBUG)
         {
-            cerr << endl << "CLFW Error :  Failed To Allocate Memory To OpenCL Kernel Source Code ... Exiting !!!" << endl;
-            return NULL;
-        }
-        else
-        {
-            logger->print_log("\nCLFW Error :  Failed To Allocate Memory To OpenCL Kernel Source Code ... Exiting !!!\n");
+            std::cerr << std::endl << "CLFW Error :  Failed To Allocate Memory To OpenCL Kernel Source Code ... Exiting !!!" << std::endl;
             return NULL;
         }
     }
 
-    while ((ch = fgetc(ocl_kernel_fp)) != EOF)
+    while ((ch = fgetc(oclKernel_fp)) != EOF)
         source_code[i++] = ch;
     *(source_code + i) = '\0';
 
-    fclose(ocl_kernel_fp);
-    ocl_kernel_fp = NULL;
+    fclose(oclKernel_fp);
+    oclKernel_fp = NULL;
 
     return (const char *)source_code;
 }
 
-void CLFW::ocl_create_program(const char* ocl_kernel_file)
+void CLFW::oclCreateProgram(const char* oclKernelFile)
 {
     // Code
-    ocl_kernel_source_code = ocl_read_kernel_from_file(ocl_kernel_file);
-    if (ocl_kernel_source_code == NULL)
+    oclKernelSourceCode = oclReadKernelFile(oclKernelFile);
+    if (oclKernelSourceCode == NULL)
     {
         if (DEBUG)
-            cerr << endl << "CLFW Error :  Failed To Read OpenCL Kernel From File : " << ocl_kernel_file << endl;
-        else
-            logger->print_log("\nCLFW Error :  Failed To Read OpenCL Kernel From File : ", ocl_kernel_file);
-
+            std::cerr << std::endl << "CLFW Error :  Failed To Read OpenCL Kernel From File : " << oclKernelFile << std::endl;
         this->uninitialize();
         exit(CLFW_FAILURE); 
     }
 
-    size_t ocl_source_code_size = strlen(ocl_kernel_source_code) + 1;
+    size_t ocl_source_code_size = strlen(oclKernelSourceCode) + 1;
 
-    ocl_program = clCreateProgramWithSource(
-        ocl_context,
+    oclProgram = clCreateProgramWithSource(
+        oclContext,
         1,
-        (const char**)&ocl_kernel_source_code,
+        (const char**)&oclKernelSourceCode,
         &ocl_source_code_size,
-        &ocl_result
+        &oclResult
     );
-    ocl_exec_status(ocl_result, __LINE__);
+    oclExecStatus(oclResult);
 
     // Release
-    free((void*)ocl_kernel_source_code);
-    ocl_kernel_source_code = NULL;
+    free((void*)oclKernelSourceCode);
+    oclKernelSourceCode = NULL;
 
-    ocl_result = clBuildProgram(
-        ocl_program,
+    oclResult = clBuildProgram(
+        oclProgram,
         0,
         NULL,
         NULL,
@@ -442,14 +396,14 @@ void CLFW::ocl_create_program(const char* ocl_kernel_file)
         NULL
     );
 
-    if (ocl_result != CL_SUCCESS)
+    if (oclResult != CL_SUCCESS)
     {
         size_t length;
         char *buffer = NULL;
 
         clGetProgramBuildInfo(
-            ocl_program,
-            ocl_device_id,
+            oclProgram,
+            oclDeviceId,
             CL_PROGRAM_BUILD_LOG,
             0,
             NULL,
@@ -460,8 +414,8 @@ void CLFW::ocl_create_program(const char* ocl_kernel_file)
         if (buffer)
         {
             clGetProgramBuildInfo(
-                ocl_program,
-                ocl_device_id,
+                oclProgram,
+                oclDeviceId,
                 CL_PROGRAM_BUILD_LOG,
                 length,
                 buffer,
@@ -469,9 +423,7 @@ void CLFW::ocl_create_program(const char* ocl_kernel_file)
             );
 
             if (DEBUG)
-                cerr << endl << "CLFW Error :  OpenCL Program Build Log : " << buffer << endl;
-            else
-                logger->print_log("\nCLFW Error :  OpenCL Program Build Log : ", buffer);
+                std::cerr << std::endl << "CLFW Error :  OpenCL Program Build Log : " << buffer << std::endl;
 
             free(buffer);
             buffer = NULL;
@@ -481,44 +433,49 @@ void CLFW::ocl_create_program(const char* ocl_kernel_file)
     }
 }
 
-void CLFW::ocl_create_kernel(const char* ocl_kernel_name, const char* ocl_kernel_arg_types, ...)
+void CLFW::oclCreateKernel(const char* oclKernelName, const char* oclKernelArgTypes, ...)
 {
     // Variable Declarations
     va_list kernel_args_list;
 
     // Code
-    ocl_kernel = clCreateKernel(ocl_program, ocl_kernel_name, &ocl_result);
-    ocl_exec_status(ocl_result, __LINE__);
+    oclKernel = clCreateKernel(oclProgram, oclKernelName, &oclResult);
+    oclExecStatus(oclResult);
 
-    va_start(kernel_args_list, ocl_kernel_arg_types);
+    va_start(kernel_args_list, oclKernelArgTypes);
 
-    for (auto i = 0; ocl_kernel_arg_types[i] != '\0'; i++)
+    for (auto i = 0; oclKernelArgTypes[i] != '\0'; i++)
     {
-        switch(ocl_kernel_arg_types[i])
+        switch(oclKernelArgTypes[i])
         {
             case 'b':
-                clfwTypes->ocl_buffer = va_arg(kernel_args_list, cl_mem);
-                ocl_exec_status(clSetKernelArg(ocl_kernel, i, sizeof(cl_mem), (void*)&clfwTypes->ocl_buffer), __LINE__);
+                clfwTypes->oclBuffer = va_arg(kernel_args_list, cl_mem);
+                oclExecStatus(clSetKernelArg(oclKernel, i, sizeof(cl_mem), (void*)&clfwTypes->oclBuffer));
             break;
 
             case 'i':
-                clfwTypes->int_data = va_arg(kernel_args_list, cl_int);
-                ocl_exec_status(clSetKernelArg(ocl_kernel, i, sizeof(cl_int), (void*)&clfwTypes->int_data), __LINE__);
+                clfwTypes->intData = va_arg(kernel_args_list, cl_int);
+                oclExecStatus(clSetKernelArg(oclKernel, i, sizeof(cl_int), (void*)&clfwTypes->intData));
             break;
 
             case 'f':
-                clfwTypes->float_data = va_arg(kernel_args_list, cl_float);
-                ocl_exec_status(clSetKernelArg(ocl_kernel, i, sizeof(cl_float), (void*)&clfwTypes->float_data), __LINE__);
+                clfwTypes->floatData = va_arg(kernel_args_list, cl_double);
+                oclExecStatus(clSetKernelArg(oclKernel, i, sizeof(cl_float), (void*)&clfwTypes->floatData));
+            break;
+
+            case 'd':
+                clfwTypes->floatData = va_arg(kernel_args_list, cl_double);
+                oclExecStatus(clSetKernelArg(oclKernel, i, sizeof(cl_double), (void*)&clfwTypes->doubleData));
             break;
 
             case 'c':
-                clfwTypes->char_data = va_arg(kernel_args_list, cl_char);
-                ocl_exec_status(clSetKernelArg(ocl_kernel, i, sizeof(cl_char), (void*)&clfwTypes->char_data), __LINE__);
+                clfwTypes->charData = va_arg(kernel_args_list, cl_int);
+                oclExecStatus(clSetKernelArg(oclKernel, i, sizeof(cl_char), (void*)&clfwTypes->charData));
             break;
 
             case 'u':
-                clfwTypes->uchar_data = va_arg(kernel_args_list, cl_uchar);
-                ocl_exec_status(clSetKernelArg(ocl_kernel, i, sizeof(cl_uchar), (void*)&clfwTypes->uchar_data), __LINE__);
+                clfwTypes->ucharData = va_arg(kernel_args_list, cl_uint);
+                oclExecStatus(clSetKernelArg(oclKernel, i, sizeof(cl_uchar), (void*)&clfwTypes->ucharData));
             break;
         }
     }
@@ -526,185 +483,173 @@ void CLFW::ocl_create_kernel(const char* ocl_kernel_name, const char* ocl_kernel
     va_end(kernel_args_list);
 }
 
-void CLFW::ocl_execute_kernel(size_t ocl_global_work_size, size_t ocl_local_work_size)
+double CLFW::oclExecuteKernel(size_t oclGlobalWorkSize, size_t oclLocalWorkSize)
 {
     // Code
-
-    // Kernel Configuration
-    sdkCreateTimer(&ocl_timer);
-    sdkStartTimer(&ocl_timer);
-    {
-        ocl_exec_status(clEnqueueNDRangeKernel(
-            ocl_command_queue,
-            ocl_kernel,
-            1,
-            NULL,
-            &ocl_global_work_size,
-            &ocl_local_work_size,
-            0,
-            NULL,
-            NULL
-        ), __LINE__);
-    }
-    sdkStopTimer(&ocl_timer);
+    clFinish(oclCommandQueue);
 
     // Finish Command Queue
-    clFinish(ocl_command_queue);
+    oclExecStatus(clEnqueueNDRangeKernel(
+        oclCommandQueue,
+        oclKernel,
+        1,
+        NULL,
+        &oclGlobalWorkSize,
+        &oclLocalWorkSize,
+        0,
+        NULL,
+        NULL
+    ));
 
-    ocl_gpu_time = sdkGetTimerValue(&ocl_timer);  
-    sdkDeleteTimer(&ocl_timer);
-    ocl_timer = NULL;
-}
-
-cl_mem CLFW::ocl_create_buffer(int flag, size_t ocl_data_size)
-{
-    switch(flag)
+    // Kernel Configuration
+    sdkCreateTimer(&oclTimer);
+    sdkStartTimer(&oclTimer);
     {
-        case OCL_READ:
-            ocl_buffer = clCreateBuffer(
-                ocl_context,
-                CL_MEM_READ_ONLY,
-                ocl_data_size,
-                NULL,
-                &ocl_result
-            );
-        break;
-
-        case OCL_WRITE:
-            ocl_buffer = clCreateBuffer(
-                ocl_context,
-                CL_MEM_WRITE_ONLY,
-                ocl_data_size,
-                NULL,
-                &ocl_result
-            );
-        break;
+        clFinish(oclCommandQueue);
     }
-    
-    ocl_exec_status(ocl_result, __LINE__);
+    sdkStopTimer(&oclTimer);
 
-    return ocl_buffer;
+    return sdkGetTimerValue(&oclTimer);
 }
 
-void CLFW::ocl_write_buffer(cl_mem ocl_data_buffer, size_t ocl_data_size, void* host_ptr)
+cl_mem CLFW::oclCreateBuffer(int flag, size_t oclDataSize)
+{
+    oclBuffer = clCreateBuffer(
+        oclContext,
+        flag,
+        oclDataSize,
+        NULL,
+        &oclResult
+    );
+    
+    oclExecStatus(oclResult);
+
+    return oclBuffer;
+}
+
+void CLFW::oclWriteBuffer(cl_mem oclDataBuffer, size_t oclDataSize, void* hostPtr)
 {
     // Code
-    ocl_exec_status(clEnqueueWriteBuffer(
-        ocl_command_queue,
-        ocl_data_buffer,
+    oclExecStatus(clEnqueueWriteBuffer(
+        oclCommandQueue,
+        oclDataBuffer,
         CL_FALSE,
         0,
-        ocl_data_size,
-        host_ptr,
+        oclDataSize,
+        hostPtr,
         0,
         NULL,
         NULL
-    ), __LINE__);
+    ));
 }
 
-void CLFW::ocl_read_buffer(cl_mem ocl_data_buffer, size_t ocl_data_size, void* host_ptr)
+void CLFW::oclReadBuffer(cl_mem oclDataBuffer, size_t oclDataSize, void* hostPtr)
 {
     // Code
-    ocl_exec_status(clEnqueueReadBuffer(
-        ocl_command_queue,
-        ocl_data_buffer,
+    oclExecStatus(clEnqueueReadBuffer(
+        oclCommandQueue,
+        oclDataBuffer,
         CL_TRUE,
         0,
-        ocl_data_size,
-        host_ptr,
+        oclDataSize,
+        hostPtr,
         0,
         NULL,
         NULL
-    ), __LINE__);
+    ));
 }
 
-void CLFW::ocl_release_buffer(cl_mem ocl_data_buffer)
+void CLFW::oclReleaseBuffer(cl_mem oclDataBuffer)
 {
-    if (ocl_data_buffer)
+    if (oclDataBuffer)
     {
-        clReleaseMemObject(ocl_data_buffer);
-        ocl_data_buffer = NULL;
+        clReleaseMemObject(oclDataBuffer);
+        oclDataBuffer = NULL;
     }
 }
 
-void CLFW::host_alloc_mem(void** host_ptr, string host_type, size_t host_size)
+void CLFW::hostMemAlloc(void** hostPtr, std::string hostType, size_t hostSize)
 {
-    if (host_type == "int")
-        *host_ptr = new int[host_size];
-    else if (host_type == "float")
-        *host_ptr = new float[host_size];
-    else if (host_type == "double")
-        *host_ptr = new double[host_size];
-    else if (host_type == "char")
-        *host_ptr = new char[host_size];
-    else if (host_type == "uchar")
-        *host_ptr = new unsigned char[host_size];
+    if (hostType == "int")
+        *hostPtr = new int[hostSize];
+    else if (hostType == "float")
+        *hostPtr = new float[hostSize];
+    else if (hostType == "double")
+        *hostPtr = new double[hostSize];
+    else if (hostType == "char")
+        *hostPtr = new char[hostSize];
+    else if (hostType == "uchar")
+        *hostPtr = new unsigned char[hostSize];
 
-    if (host_ptr == NULL)
+    if (hostPtr == NULL)
     {
         if (DEBUG)
-            cerr << endl << "Failed To Allocate Memory To : " << *host_ptr << endl;
-        else
-            logger->print_log("Failed To Allocate Memory");
+            std::cerr << std::endl << "Failed To Allocate Memory To : " << *hostPtr << std::endl;
 
         exit(EXIT_FAILURE);
     }
 
-    memset(*host_ptr, 0, host_size);
+    memset(*hostPtr, 0, hostSize);
 }
 
-void CLFW::host_release_mem(void** host_ptr)
+void CLFW::hostMemFree(void** hostPtr)
 {
-    if (*host_ptr)
+    if (*hostPtr)
     {
-        delete *host_ptr;
-        *host_ptr = nullptr;
+        delete *hostPtr;
+        *hostPtr = nullptr;
     }
 }
 
 void CLFW::uninitialize(void)
 {
     // Code
-    if (ocl_kernel)
+    if (oclKernel)
     {
-        clReleaseKernel(ocl_kernel);
-        ocl_kernel = nullptr;
+        clReleaseKernel(oclKernel);
+        oclKernel = nullptr;
     }
 
-    if (ocl_program)
+    if (oclProgram)
     {
-        clReleaseProgram(ocl_program);
-        ocl_program = nullptr;
+        clReleaseProgram(oclProgram);
+        oclProgram = nullptr;
     }
 
-    if (ocl_command_queue)
+    if (oclCommandQueue)
     {
-        clReleaseCommandQueue(ocl_command_queue);
-        ocl_command_queue = nullptr;
+        clReleaseCommandQueue(oclCommandQueue);
+        oclCommandQueue = nullptr;
     }
 
-    if (ocl_context)
+    if (oclContext)
     {
-        clReleaseContext(ocl_context);
-        ocl_context = nullptr;
+        clReleaseContext(oclContext);
+        oclContext = nullptr;
     }
 
-    if (ocl_devices)
+    if (oclDevices)
     {
-        free(ocl_devices);
-        ocl_devices = nullptr;
+        free(oclDevices);
+        oclDevices = nullptr;
     }
 
-    if (ocl_platforms)
+    if (oclPlatforms)
     {
-        free(ocl_platforms);
-        ocl_platforms = nullptr;
+        free(oclPlatforms);
+        oclPlatforms = nullptr;
     }
 
-    if (logger)
+    if (oclTimer)
     {
-        logger->print_log("Log File Closed");
-        logger->uninitialize();
-        logger = nullptr;
+        sdkDeleteTimer(&oclTimer);
+        oclTimer = nullptr;
     }
+}
+
+CLFW::~CLFW()
+{
+    // Code
+    delete clfwTypes;
+    clfwTypes = nullptr;
 }

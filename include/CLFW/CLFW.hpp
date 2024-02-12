@@ -18,89 +18,76 @@
 
     // CLFW Headers
     #include "CLFWMacros.hpp"
-    #include "Logger.hpp"
     #include "CLFWTypes.hpp"
-
-    // Platform Headers
-    #if (CLFW_OS == 1)
-        #include <CL/opencl.h>
-        #pragma comment(lib, "OpenCL.lib")
-    #elif (CLFW_OS == 2)
-        #include <CL/opencl.h>
-    #elif (CLFW_OS == 3)
-        #include <OpenCL/cl.h>
-    #endif
 
     class CLFW
     {
         // Member Variable Declarations
         private:
 
-        // ClfwKernelDataTypes
-        CLFWTypes *clfwTypes = nullptr;
+            // CLFW Kernel Data Types
+            CLFWTypes *clfwTypes = nullptr;
 
-        // Logger
-        Logger *logger = nullptr;
+            // Timer
+            StopWatchInterface *oclTimer = nullptr;
 
-        // Timer
-        StopWatchInterface *ocl_timer = nullptr;
+            //* Device Enumeration
+            cl_platform_id *oclPlatforms = nullptr;
+            cl_device_id *oclDevices = nullptr;
+            cl_uint oclNumPlatforms = 0, oclNumDevices = 0;
+            char oclPlatformInfo[512], oclDevProp[1024];
 
-        // Device Enumeration
-        cl_platform_id *ocl_platforms = nullptr;
-        cl_device_id *ocl_devices = nullptr;
-        cl_uint ocl_num_platforms = 0, ocl_num_devices = 0;
-        char ocl_platform_info[512], ocl_dev_prop[1024];
+            //* Device Selection
+            cl_platform_id oclPlatformId;
+            cl_device_id oclDeviceId;
+            int user_platform, user_device;
 
-        // Device Selection
-        cl_platform_id ocl_platform_id;
-        cl_device_id ocl_device_id;
-        int user_platform, user_device;
+            //* Device Properties
+            cl_ulong oclMemSize;
+            cl_uint oclComputeUnits;
 
-        // Device Properties
-        cl_ulong ocl_mem_size;
-        cl_uint ocl_compute_units;
-
-        cl_context ocl_context;
-        cl_command_queue ocl_command_queue;
-        const char* ocl_kernel_source_code = NULL;
-        cl_program ocl_program;
-        cl_kernel ocl_kernel;
-        cl_int ocl_result;
-        cl_mem ocl_buffer;
+            cl_context oclContext;
+            cl_command_queue oclCommandQueue;
+            const char* oclKernelSourceCode = NULL;
+            cl_program oclProgram;
+            cl_kernel oclKernel;
+            cl_int oclResult;
+            cl_mem oclBuffer;
 
         public:
 
-        float ocl_gpu_time = 0.0f;
+            CLFW(void);
+            ~CLFW();
 
-        // Member Function Prototypes
-        void initialize(void);
-        void uninitialize(void);
+            // Member Function Prototypes
+            void initialize(void);
+            void uninitialize(void);
 
-        void ocl_exec_status(cl_int ocl_result, int line_no);
-        std::string ocl_get_error_string(cl_int ocl_result);
+            void oclExecStatus(cl_int oclResult);
+            std::string oclGetErrorString(cl_int oclResult);
 
-        void ocl_get_platforms(void);
-        void ocl_set_platform(int ocl_platform);
+            void oclGetPlatforms(void);
+            void oclSetPlatform(int oclPlatform);
 
-        void ocl_get_devices(void);
-        void ocl_set_device(int ocl_device);
+            void oclGetDevices(void);
+            void oclSetDevice(int oclDevice);
 
-        void ocl_dev_properties(void);
-        const char *ocl_read_kernel_from_file(const char *ocl_kernel_file);
+            void oclGetDeviceProperties(void);
+            const char *oclReadKernelFile(const char *oclKernelFile);
 
-        void ocl_create_context(void);
-        void ocl_create_command_queue(void);
-        void ocl_create_program(const char* ocl_kernel_file);
-        void ocl_create_kernel(const char* ocl_kernel_name, const char* ocl_kernel_arg_types,...);
-        void ocl_execute_kernel(size_t ocl_global_work_size, size_t ocl_local_work_size);
+            void oclCreateContext(void);
+            void oclCreateCommandQueue(void);
+            void oclCreateProgram(const char* oclKernelFile);
+            void oclCreateKernel(const char* oclKernelName, const char *oclKernelArgTypes,...);
+            double oclExecuteKernel(size_t oclGlobalWorkSize, size_t oclLocalWorkSize);
 
-        void host_alloc_mem(void** host_ptr, std::string host_type, size_t host_size);
-        void host_release_mem(void** host_ptr);
+            void hostMemAlloc(void** hostPtr, std::string hostType, size_t hostSize);
+            void hostMemFree(void** hostPtr);
 
-        cl_mem ocl_create_buffer(int flag, size_t ocl_data_size);
-        void ocl_write_buffer(cl_mem ocl_data_buffer, size_t ocl_data_size, void* host_ptr);
-        void ocl_read_buffer(cl_mem ocl_data_buffer, size_t ocl_data_size, void* host_ptr);
-        void ocl_release_buffer(cl_mem ocl_data_buffer);
+            cl_mem oclCreateBuffer(int flag, size_t oclDataSize);
+            void oclWriteBuffer(cl_mem oclDataBuffer, size_t oclDataSize, void* hostPtr);
+            void oclReadBuffer(cl_mem oclDataBuffer, size_t oclDataSize, void* hostPtr);
+            void oclReleaseBuffer(cl_mem oclDataBuffer);
     };
 
 #endif // _CLFW_HEADER_HPP_

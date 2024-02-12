@@ -16,10 +16,11 @@ class CLFWTypes
 {
     public:
 
-    // Member Variables
-    cl_int int_data;
-    cl_float float_data;
-    cl_char char_data;
-    cl_uchar uchar_data;
-    cl_mem ocl_buffer;
+        // Member Variables
+        cl_int intData;
+        cl_float floatData;
+        cl_double doubleData;
+        cl_char charData;
+        cl_uchar ucharData;
+        cl_mem oclBuffer;
 };

@@ -78,9 +78,9 @@ void verify_output(float *host_arr, float *device_arr)
 	}
 
 	if (bAccuracy)
-		cout << endl << "Vector Addition Successful ..." << endl;
+		std::cout << std::endl << "Vector Addition Successful ..." << std::endl;
 	else
-		cerr << endl << "Vector Addition Failed At Index : " << breakValue << " !!!" << endl;
+		std::cerr << std::endl << "Vector Addition Failed At Index : " << breakValue << " !!!" << std::endl;
 }
 
 int main(void)
@@ -90,48 +90,48 @@ int main(void)
 
     clfw->initialize();
 
-	cout << endl << "Testing VecAdd ..." << endl;
+	std::cout << std::endl << "Testing VecAdd ..." << std::endl;
 
 	size_t data_size = elements * sizeof(float);
 
-	clfw->host_alloc_mem((void**)&hostInput1, "float", data_size);
-	clfw->host_alloc_mem((void**)&hostInput2, "float", data_size);
-	clfw->host_alloc_mem((void**)&hostOutput, "float", data_size);
-	clfw->host_alloc_mem((void**)&gold, "float", data_size);
+	clfw->hostMemAlloc((void**)&hostInput1, "float", data_size);
+	clfw->hostMemAlloc((void**)&hostInput2, "float", data_size);
+	clfw->hostMemAlloc((void**)&hostOutput, "float", data_size);
+	clfw->hostMemAlloc((void**)&gold, "float", data_size);
 
 	populate_array(hostInput1, elements);
 	populate_array(hostInput2, elements);
 
 	vec_add_cpu(hostInput1, hostInput2, gold, elements);
 
-	deviceInput1 = clfw->ocl_create_buffer(OCL_READ, data_size);
-	deviceInput2 = clfw->ocl_create_buffer(OCL_READ, data_size);
-	deviceOutput = clfw->ocl_create_buffer(OCL_WRITE, data_size);
+	deviceInput1 = clfw->oclCreateBuffer(CL_MEM_READ_ONLY, data_size);
+	deviceInput2 = clfw->oclCreateBuffer(CL_MEM_READ_ONLY, data_size);
+	deviceOutput = clfw->oclCreateBuffer(CL_MEM_WRITE_ONLY, data_size);
 
-	clfw->ocl_create_program("./include/OpenCL-Kernels/VecAdd.cl");
+	clfw->oclCreateProgram("./include/OpenCL-Kernels/VecAdd.cl");
 
-	clfw->ocl_create_kernel("vec_add_gpu", "bbbi", deviceInput1, deviceInput2, deviceOutput, elements);
+	clfw->oclCreateKernel("vec_add_gpu", "bbbi", deviceInput1, deviceInput2, deviceOutput, elements);
 
-	clfw->ocl_write_buffer(deviceInput1, data_size, hostInput1);
-	clfw->ocl_write_buffer(deviceInput2, data_size, hostInput2);
+	clfw->oclWriteBuffer(deviceInput1, data_size, hostInput1);
+	clfw->oclWriteBuffer(deviceInput2, data_size, hostInput2);
 
-	clfw->ocl_execute_kernel(round_global_size(local_size, elements), local_size);
+	double gpuTime = clfw->oclExecuteKernel(round_global_size(local_size, elements), local_size);
 
-	clfw->ocl_read_buffer(deviceOutput, data_size, hostOutput);
+	clfw->oclReadBuffer(deviceOutput, data_size, hostOutput);
 
 	verify_output(gold, hostOutput);
 
-	cout << endl << "Time Required For CPU : " << cpu_time << " ms" << endl;
-	cout << endl << "Time Required For GPU (OpenCL) : " << clfw->ocl_gpu_time << " ms" << endl << endl;
+	std::cout << std::endl << "Time Required For CPU : " << cpu_time << " ms" << std::endl;
+	std::cout << std::endl << "Time Required For GPU (OpenCL) : " << gpuTime << " ms" << std::endl << std::endl;
 
-	clfw->ocl_release_buffer(deviceOutput);
-	clfw->ocl_release_buffer(deviceInput2);
-	clfw->ocl_release_buffer(deviceInput1);
+	clfw->oclReleaseBuffer(deviceOutput);
+	clfw->oclReleaseBuffer(deviceInput2);
+	clfw->oclReleaseBuffer(deviceInput1);
 
-	clfw->host_release_mem((void**)&gold);
-	clfw->host_release_mem((void**)&hostOutput);
-	clfw->host_release_mem((void**)&hostInput2);
-	clfw->host_release_mem((void**)&hostInput1);
+	clfw->hostMemFree((void**)&gold);
+	clfw->hostMemFree((void**)&hostOutput);
+	clfw->hostMemFree((void**)&hostInput2);
+	clfw->hostMemFree((void**)&hostInput1);
 
     clfw->uninitialize();
 
