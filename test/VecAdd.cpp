@@ -128,10 +128,15 @@ int main(void)
 	clfw->oclReleaseBuffer(deviceInput2);
 	clfw->oclReleaseBuffer(deviceInput1);
 
-	clfw->hostMemFree((void**)&gold);
-	clfw->hostMemFree((void**)&hostOutput);
-	clfw->hostMemFree((void**)&hostInput2);
-	clfw->hostMemFree((void**)&hostInput1);
+	// clfw->hostMemFree((void**)&gold);
+	// clfw->hostMemFree((void**)&hostOutput);
+	// clfw->hostMemFree((void**)&hostInput2);
+	// clfw->hostMemFree((void**)&hostInput1);
+	
+	clfw->hostMemFree(&gold);
+	clfw->hostMemFree(&hostOutput);
+	clfw->hostMemFree(&hostInput2);
+	clfw->hostMemFree(&hostInput1);
 
     clfw->uninitialize();
 

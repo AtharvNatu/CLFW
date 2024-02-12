@@ -28,12 +28,9 @@
             // CLFW Kernel Data Types
             CLFWTypes *clfwTypes = nullptr;
 
-            // Timer
-            StopWatchInterface *oclTimer = nullptr;
-
             //* Device Enumeration
-            cl_platform_id *oclPlatforms = nullptr;
-            cl_device_id *oclDevices = nullptr;
+            cl_platform_id *oclPlatforms = NULL;
+            cl_device_id *oclDevices = NULL;
             cl_uint oclNumPlatforms = 0, oclNumDevices = 0;
             char oclPlatformInfo[512], oclDevProp[1024];
 
@@ -53,6 +50,8 @@
             cl_kernel oclKernel;
             cl_int oclResult;
             cl_mem oclBuffer;
+            cl_event timeEvent;
+            cl_ulong startTime, endTime;
 
         public:
 
@@ -82,7 +81,7 @@
             double oclExecuteKernel(size_t oclGlobalWorkSize, size_t oclLocalWorkSize);
 
             void hostMemAlloc(void** hostPtr, std::string hostType, size_t hostSize);
-            void hostMemFree(void** hostPtr);
+            void hostMemFree(float** hostPtr);
 
             cl_mem oclCreateBuffer(int flag, size_t oclDataSize);
             void oclWriteBuffer(cl_mem oclDataBuffer, size_t oclDataSize, void* hostPtr);

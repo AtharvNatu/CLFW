@@ -305,7 +305,7 @@ void CLFW::oclCreateCommandQueue(void)
     oclCommandQueue = clCreateCommandQueue(
         oclContext,
         oclDeviceId,
-        0,
+        CL_QUEUE_PROFILING_ENABLE,
         &oclResult     
     );
     oclExecStatus(oclResult);
@@ -486,9 +486,6 @@ void CLFW::oclCreateKernel(const char* oclKernelName, const char* oclKernelArgTy
 double CLFW::oclExecuteKernel(size_t oclGlobalWorkSize, size_t oclLocalWorkSize)
 {
     // Code
-    clFinish(oclCommandQueue);
-
-    // Finish Command Queue
     oclExecStatus(clEnqueueNDRangeKernel(
         oclCommandQueue,
         oclKernel,
@@ -498,18 +495,31 @@ double CLFW::oclExecuteKernel(size_t oclGlobalWorkSize, size_t oclLocalWorkSize)
         &oclLocalWorkSize,
         0,
         NULL,
+        &timeEvent
+    ));
+
+    oclExecStatus(clFinish(oclCommandQueue));
+
+    oclExecStatus(clGetEventProfilingInfo(
+        timeEvent,
+        CL_PROFILING_COMMAND_START,
+        sizeof(startTime),
+        &startTime,
         NULL
     ));
 
-    // Kernel Configuration
-    sdkCreateTimer(&oclTimer);
-    sdkStartTimer(&oclTimer);
-    {
-        clFinish(oclCommandQueue);
-    }
-    sdkStopTimer(&oclTimer);
+    oclExecStatus(clGetEventProfilingInfo(
+        timeEvent,
+        CL_PROFILING_COMMAND_END,
+        sizeof(endTime),
+        &endTime,
+        NULL
+    ));
 
-    return sdkGetTimerValue(&oclTimer);
+    double gpuTime = (double) (endTime - startTime) * 1.0e-6;
+
+    return gpuTime;
+
 }
 
 cl_mem CLFW::oclCreateBuffer(int flag, size_t oclDataSize)
@@ -592,11 +602,11 @@ void CLFW::hostMemAlloc(void** hostPtr, std::string hostType, size_t hostSize)
     memset(*hostPtr, 0, hostSize);
 }
 
-void CLFW::hostMemFree(void** hostPtr)
+void CLFW::hostMemFree(float** hostPtr)
 {
     if (*hostPtr)
     {
-        delete *hostPtr;
+        delete[] *hostPtr;
         *hostPtr = nullptr;
     }
 }
@@ -618,6 +628,7 @@ void CLFW::uninitialize(void)
 
     if (oclCommandQueue)
     {
+        clFlush(oclCommandQueue);
         clReleaseCommandQueue(oclCommandQueue);
         oclCommandQueue = nullptr;
     }
@@ -631,19 +642,13 @@ void CLFW::uninitialize(void)
     if (oclDevices)
     {
         free(oclDevices);
-        oclDevices = nullptr;
+        oclDevices = NULL;
     }
 
     if (oclPlatforms)
     {
         free(oclPlatforms);
-        oclPlatforms = nullptr;
-    }
-
-    if (oclTimer)
-    {
-        sdkDeleteTimer(&oclTimer);
-        oclTimer = nullptr;
+        oclPlatforms = NULL;
     }
 }
 
