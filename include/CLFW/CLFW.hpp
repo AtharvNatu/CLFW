@@ -73,8 +73,8 @@
             void oclSetDevice(int oclDevice);
 
             void oclGetDeviceProperties(void);
-            void oclCreateImage(cl_mem *devPtr, cl_mem_flags flags, int imageWidth, int imageHeight, unsigned char *imagePixels);
-            void oclReadImage(cl_mem *devImagePtr, int imageWidth, int imageHeight, unsigned char *hostArr);
+            void oclCreateImage(cl_mem *devImagePtr, cl_mem_flags flags, size_t imageWidth, size_t imageHeight, unsigned char *imagePixels);
+            void oclReadImage(cl_mem *devImagePtr, int imageWidth, int imageHeight, unsigned char *imagePixels);
 
             void oclCreateContext(void);
             void oclCreateCommandQueue(void);
@@ -82,6 +82,7 @@
             void oclCreateKernel(const char* oclKernelName, const char *oclKernelArgTypes,...);
             size_t getGlobalWorkSize(int localSize, unsigned int globalSize);
             double oclExecuteKernel(size_t oclGlobalWorkSize, size_t oclLocalWorkSize, int workDimensions);
+            double oclExecuteKernel(size_t *oclGlobalWorkSize, size_t oclLocalWorkSize, int workDimensions);
 
             void hostMemAlloc(void** hostPtr, std::string hostType, size_t hostSize);
 

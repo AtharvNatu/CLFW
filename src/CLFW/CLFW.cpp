@@ -355,30 +355,47 @@ void CLFW::oclGetDeviceProperties(void)
     }
 }
 
-void CLFW::oclCreateImage(cl_mem *devImagePtr, cl_mem_flags flags, int imageWidth, int imageHeight, unsigned char *imagePixels)
+void CLFW::oclCreateImage(cl_mem *devImagePtr, cl_mem_flags flags, size_t imageWidth, size_t imageHeight, unsigned char *imagePixels)
 {
     // Code
-    oclImageFormat.image_channel_order = CL_BGRA;
+    oclImageFormat.image_channel_order = CL_RGBA;
     oclImageFormat.image_channel_data_type = CL_UNSIGNED_INT8;
 
-    *devImagePtr = clCreateImage2D(
-        oclContext,
-        flags,
-        &oclImageFormat,
-        imageWidth,
-        imageHeight,
-        0,
-        imagePixels,
-        &oclResult
-    );
+    if (imagePixels != NULL)
+    {
+        *devImagePtr = clCreateImage2D(
+            oclContext,
+            flags,
+            &oclImageFormat,
+            imageWidth,
+            imageHeight,
+            0,
+            imagePixels,
+            &oclResult
+        );
+    }
+    else
+    {
+        *devImagePtr = clCreateImage2D(
+            oclContext,
+            flags,
+            &oclImageFormat,
+            imageWidth,
+            imageHeight,
+            0,
+            NULL,
+            &oclResult
+        );
+    }
+    
     oclExecStatus(oclResult);
 }
 
-void CLFW::oclReadImage(cl_mem *devImagePtr, int imageWidth, int imageHeight, unsigned char *hostArr)
+void CLFW::oclReadImage(cl_mem *devImagePtr, int imageWidth, int imageHeight, unsigned char* imagePixels)
 {
     // Variable Declarations
     const size_t origin[3] = { 0, 0, 0 };
-	const size_t region[3] = { imageWidth, imageHeight, 1 };
+	const size_t region[3] = { static_cast<size_t>(imageWidth), static_cast<size_t>(imageHeight), 1 };
 
     // Code
     oclExecStatus(clEnqueueReadImage(
@@ -389,7 +406,7 @@ void CLFW::oclReadImage(cl_mem *devImagePtr, int imageWidth, int imageHeight, un
         region,
         0,
         0,
-        hostArr,
+        imagePixels,
         0,
         NULL,
         NULL
@@ -565,7 +582,53 @@ double CLFW::oclExecuteKernel(size_t oclGlobalWorkSize, size_t oclLocalWorkSize,
         &endTime,
         NULL));
 
-    double gpuTime = (double)(endTime - startTime) * 1.0e-6;
+    double gpuTime = (double)(endTime - startTime);
+
+    //* Convert nanoseconds to seconds
+    gpuTime *= 1.0e-9;
+
+    return gpuTime;
+}
+
+double CLFW::oclExecuteKernel(size_t *oclGlobalWorkSize, size_t oclLocalWorkSize, int workDimensions)
+{
+    // Code
+    oclExecStatus(clEnqueueNDRangeKernel(
+        oclCommandQueue,
+        oclKernel,
+        2,
+        NULL,
+        oclGlobalWorkSize,
+        0,
+        0,
+        NULL,
+        &timeEvent
+    ));
+
+    oclExecStatus(clFinish(oclCommandQueue));
+    
+    oclExecStatus(clWaitForEvents(1, &timeEvent));
+
+    oclExecStatus(clGetEventProfilingInfo(
+        timeEvent,
+        CL_PROFILING_COMMAND_START,
+        sizeof(startTime),
+        &startTime,
+        NULL
+    ));
+
+    oclExecStatus(clGetEventProfilingInfo(
+        timeEvent,
+        CL_PROFILING_COMMAND_END,
+        sizeof(endTime),
+        &endTime,
+        NULL
+    ));
+
+    double gpuTime = (double)(endTime - startTime);
+    
+    //* Convert nanoseconds to seconds
+    gpuTime *= 1.0e-9;
 
     return gpuTime;
 }
