@@ -368,6 +368,123 @@ void CLFW::oclCreateCommandQueue(void)
     oclExecStatus(oclResult);
 }
 
+const char* CLFW::oclReadKernelFromFile(const char *oclKernelFile)
+{
+    // Variable Declarations
+    char ch;
+    int i = 0;
+    FILE *oclKernelFp = NULL;
+
+    // Code
+    if (oclKernelFile == NULL)
+        return NULL;
+
+    #if (CLFW_OS == 1)
+        fopen_s(&oclKernelFp, oclKernelFile, "r");
+    #else
+        oclKernelFp = fopen(oclKernelFile, "r");
+    #endif
+
+    if (oclKernelFp == NULL)
+    {
+        if (DEBUG)
+        {
+            std::cerr << std::endl << "CLFW Error :  Failed To Open OpenCL Kernel File " << oclKernelFile << " ... Exiting !!!" << std::endl;
+            return NULL;
+        }
+    }
+
+    int fileLength = std::filesystem::file_size(oclKernelFile);
+
+    char *sourceCode = (char*)calloc(1, fileLength + 1);
+    if (sourceCode == NULL)
+    {
+        if (DEBUG)
+        {
+            std::cerr << std::endl << "CLFW Error :  Failed To Allocate Memory To OpenCL Kernel Source Code ... Exiting !!!" << std::endl;
+            return NULL;
+        }
+    }
+
+    
+    while ((ch = fgetc(oclKernelFp)) != EOF)
+        sourceCode[i++] = ch;
+    *(sourceCode + i) = '\0';
+
+    fclose(oclKernelFp);
+    oclKernelFp = NULL;
+
+    return (const char*)sourceCode;
+}
+
+void CLFW::oclCreateProgramFromFile(const char *oclKernelFile)
+{
+    // Code
+    oclKernelSourceCode = oclReadKernelFromFile(oclKernelFile);
+    if (oclKernelSourceCode == NULL)
+    {
+        if (DEBUG)
+            std::cerr << std::endl << "CLFW Error :  Failed To Read OpenCL Kernel From File " << oclKernelFile << " ... Exiting !!!" << std::endl;  
+    }
+
+    size_t oclSourceCodeSize = strlen(oclKernelSourceCode) + 1;
+
+    oclProgram = clCreateProgramWithSource(
+        oclContext,
+        1,
+        (const char **)&oclKernelSourceCode,
+        &oclSourceCodeSize,
+        &oclResult
+    );
+    oclExecStatus(oclResult);
+
+    // Release
+    free((void*)oclKernelSourceCode);
+    oclKernelSourceCode = NULL;
+
+    oclResult = clBuildProgram(
+        oclProgram,
+        0,
+        NULL,
+        NULL,
+        NULL,
+        NULL);
+
+    if (oclResult != CL_SUCCESS)
+    {
+        size_t length;
+        char *buffer = NULL;
+
+        clGetProgramBuildInfo(
+            oclProgram,
+            oclDeviceId,
+            CL_PROGRAM_BUILD_LOG,
+            0,
+            NULL,
+            &length);
+
+        buffer = (char *)malloc(length);
+        if (buffer)
+        {
+            clGetProgramBuildInfo(
+                oclProgram,
+                oclDeviceId,
+                CL_PROGRAM_BUILD_LOG,
+                length,
+                buffer,
+                NULL);
+
+            if (DEBUG)
+                std::cerr << std::endl << "CLFW Error :  OpenCL Program Build Log : " << buffer << std::endl;
+
+            free(buffer);
+            buffer = NULL;
+            this->uninitialize();
+            exit(CLFW_FAILURE);
+        }
+    }
+}
+
 void CLFW::oclCreateProgram(const char *oclKernelSource)
 {
     // Code

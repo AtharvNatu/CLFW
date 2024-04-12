@@ -78,7 +78,9 @@
 
             void oclCreateContext(void);
             void oclCreateCommandQueue(void);
-            void oclCreateProgram(const char* oclKernelFile);
+            void oclCreateProgram(const char* oclKernelSource);
+            void oclCreateProgramFromFile(const char* oclKernelFile);
+            const char* oclReadKernelFromFile(const char* oclKernelFile);
             void oclCreateKernel(const char* oclKernelName, const char *oclKernelArgTypes,...);
             size_t getGlobalWorkSize(int localSize, unsigned int globalSize);
             double oclExecuteKernel(size_t oclGlobalWorkSize, size_t oclLocalWorkSize, int workDimensions);
